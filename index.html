@@ -157,7 +157,13 @@
          */
         async function fetchMatchesData() {
             try {
-                const response = await fetch(API_URL);
+                // في ملف index.html
+// تأكد أنك تستخدم المتغير الصحيح في دالة fetchMatchesData
+async function fetchMatchesData() {
+    try {
+        // استخدم PROXY_FUNCTION_URL بدلاً من API_URL
+        const response = await fetch(PROXY_FUNCTION_URL); 
+        // ... باقي الكود
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
