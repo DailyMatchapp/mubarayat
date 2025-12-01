@@ -26,7 +26,7 @@
             padding: 0;
         }
         .container {
-            max-width: 1000px;
+            max-width: 900px;
             margin: 20px auto;
             background-color: var(--main-bg);
             padding: 20px;
@@ -54,113 +54,95 @@
             border: 1px solid var(--border-color);
             transition: background-color 0.2s;
         }
-        .league-header:hover {
-             background-color: var(--hover-color);
-        }
+        .league-header:hover { background-color: var(--hover-color); }
         
+        /* 🚩 التعديل هنا: ترتيب الوقت والنتيجة في المنتصف */
         .match-row {
+            /* 5 أعمدة: Team A | Score A | Status/Time | Score B | Team B */
             display: grid;
-            grid-template-columns: 1fr 4fr 1fr 4fr 1fr; /* Status | Team | Score | Team | Details */
+            grid-template-columns: 4fr 1fr 1.5fr 1fr 4fr; 
             align-items: center;
-            padding: 10px;
+            padding: 10px 0;
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: background-color 0.2s;
-            margin-top: 5px;
+            margin-top: 1px;
         }
-        .match-row:hover {
-            background-color: var(--hover-color);
-        }
+        .match-row:hover { background-color: var(--hover-color); }
         
-        /* Status Indicators */
-        .match-status {
-            font-weight: 600;
-            text-align: center;
-            font-size: 0.85em;
-        }
-        .live-status { color: var(--live-color); } /* Green for Live */
-        .ft-status { color: var(--completed-color); } /* Gray for Full Time */
-        .ns-status { color: var(--primary-color); } /* Blue for Not Started */
-
         .team-name-display {
-            text-align: left;
+            text-align: right; /* الفريق الأول (اليسار) */
+            padding-right: 15px;
+            font-weight: 500;
+        }
+        .team-name-away {
+            text-align: left; /* الفريق الثاني (اليمين) */
             padding-left: 15px;
             font-weight: 500;
         }
+        
+        /* عناصر المنتصف */
         .score-box {
             font-weight: bold;
             text-align: center;
             color: var(--text-color);
             background-color: var(--hover-color);
-            padding: 5px 8px;
-            border-radius: 3px;
+            padding: 5px 0; /* عرض النتيجة فقط */
         }
+        .center-status-time {
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.85em;
+            /* للتفريق بين الوقت والنتيجة */
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            padding: 5px 0;
+        }
+        
+        /* Status Indicators */
+        .live-status { color: var(--live-color); } 
+        .ft-status { color: var(--completed-color); } 
+        .ns-status { color: var(--primary-color); } 
 
         /* --- Modal Styling --- */
         .modal {
-            display: none; 
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
             background-color: rgba(0, 0, 0, 0.85); 
             padding-top: 50px;
         }
         .modal-content {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            margin: 5% auto; 
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 700px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+            background-color: var(--card-bg); color: var(--text-color);
+            margin: 5% auto; padding: 30px; border-radius: 10px;
+            width: 90%; max-width: 700px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
         }
         .close {
-            color: var(--completed-color);
-            float: right;
-            font-size: 35px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.2s;
+            color: var(--completed-color); float: right; font-size: 35px;
+            font-weight: bold; cursor: pointer; transition: color 0.2s;
         }
-        .close:hover {
-            color: var(--text-color);
-        }
+        .close:hover { color: var(--text-color); }
         .modal-title {
-            color: var(--live-color);
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            color: var(--live-color); text-align: center; margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 1px solid var(--border-color);
         }
         .loader {
-            border: 4px solid var(--border-color); 
-            border-top: 4px solid var(--primary-color);
+            border: 4px solid var(--border-color); border-top: 4px solid var(--primary-color);
             border-radius: 50%; width: 30px; height: 30px;
             animation: spin 1s linear infinite; margin: 20px auto;
         }
         
-        /* Table Styling within Modal */
         .modal-body table {
             width: 100%; border-collapse: collapse; margin-top: 15px;
-            background-color: var(--hover-color);
-            border: 1px solid var(--border-color);
+            background-color: var(--hover-color); border: 1px solid var(--border-color);
         }
         .modal-body th, .modal-body td {
             padding: 10px 8px; border: 1px solid var(--border-color); text-align: center;
         }
         .modal-body th {
-            background-color: var(--hover-color);
-            color: var(--primary-color);
+            background-color: var(--hover-color); color: var(--primary-color);
         }
-        .modal-body h5 {
-            color: var(--live-color);
-        }
+        .modal-body h5 { color: var(--live-color); }
     </style>
 </head>
 <body>
@@ -184,7 +166,6 @@
     <script>
         // --- JavaScript Logic (English) ---
 
-        // 🚩 Netlify Proxy URLs (Assuming these are working after troubleshooting)
         const PROXY_MATCHES_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-matches'; 
         const PROXY_STANDINGS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-standings'; 
         const PROXY_DETAILS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-details'; 
@@ -202,11 +183,7 @@
         async function fetchData(url, errorMsg) {
             try {
                 const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`${errorMsg} Status: ${response.status}`);
-                }
-                
+                if (!response.ok) throw new Error(`${errorMsg} Status: ${response.status}`);
                 return await response.json();
             } catch (error) {
                 console.error("Fetch Error:", error);
@@ -230,13 +207,12 @@
             const data = await fetchData(`${PROXY_STANDINGS_URL}?sid=${sid}`, 'Failed to fetch standings.');
 
             if (!data) {
-                openModal(`Error Fetching Standings`, `<p style="color: red;">Could not fetch standings data. Please check Netlify Function (Status: 404/500).</p>`);
+                openModal(`Error Fetching Standings`, `<p style="color: red;">Could not fetch standings data. Check Netlify Function (Status: 404/500).</p>`);
                 return;
             }
             
             let html = `<h4>${leagueName} Table</h4>`;
             
-            // Assuming data.Tables[0].Rows contains the standings data
             if (data.Tables && data.Tables.length > 0 && data.Tables[0].Rows) {
                 html += `<table>
                     <thead><tr><th>#</th><th>Team</th><th>Pl</th><th>Pts</th></tr></thead><tbody>`;
@@ -272,7 +248,6 @@
             html += '<h5>⚡️ Match Events:</h5>';
             if (data.Events && data.Events.length > 0) {
                 data.Events.forEach(e => {
-                    // Assuming e.Min, e.Nm, e.Tnm are available
                     html += `<p style="margin: 5px 0;">(${e.Min}') ${e.Nm} - ${e.Tnm}</p>`;
                 });
             } else {
@@ -283,7 +258,6 @@
             html += '<hr><h5>⚔️ Head-to-Head (Previous Matches):</h5>';
             if (data.H2H && data.H2H.length > 0) {
                 data.H2H.forEach(match => {
-                    // Assuming match.Esd, Tr1, Tr2, T1nm, T2nm are available
                     html += `<p style="margin: 5px 0; font-size: 0.9em;">
                         ${formatTime(match.Esd).split(' ')[0]} | ${match.T1nm} 
                         <span style="font-weight: bold; color: var(--live-color);">${match.Tr1} - ${match.Tr2}</span> 
@@ -335,8 +309,9 @@
             matchesList.innerHTML = ''; 
 
             data.Stages.forEach(stage => {
-                const leagueName = stage.Snm;
-                const countryName = stage.Cnm;
+                // 🚩 تصحيح مشكلة undefined: استخدام قيم بديلة آمنة
+                const leagueName = stage.Snm || 'Unknown League';
+                const countryName = stage.Cnm || 'Unknown Country';
                 
                 // League Header (Clickable for Standings)
                 const leagueHeader = document.createElement('div');
@@ -353,7 +328,7 @@
                         const awayTeam = event.T2[0];
                         
                         const statusInfo = getStatusInfo(event.Eps);
-                        const displayStatus = statusInfo.text === 'Time' ? formatTime(event.Esd).split(' ')[1] : statusInfo.text; 
+                        const displayStatusTime = statusInfo.text === 'Time' ? formatTime(event.Esd).split(' ')[1] : statusInfo.text; 
                         
                         const scoreHome = event.Tr1 || 0;
                         const scoreAway = event.Tr2 || 0;
@@ -361,18 +336,18 @@
                         const row = document.createElement('div');
                         row.className = 'match-row';
                         
-                        // Set data attributes for both actions (details/standings)
                         row.dataset.action = 'details';
                         row.dataset.eid = event.Eid;
                         row.dataset.home = homeTeam.Nm;
                         row.dataset.away = awayTeam.Nm;
                         
+                        // 🚩 الهيكل الجديد: Team A | Score A | Status/Time | Score B | Team B
                         row.innerHTML = `
-                            <span class="match-status ${statusInfo.class}">${displayStatus}</span>
                             <span class="team-name-display">${homeTeam.Nm}</span>
                             <span class="score-box">${scoreHome}</span>
-                            <span class="team-name-display">${awayTeam.Nm}</span>
+                            <span class="center-status-time ${statusInfo.class}">${displayStatusTime}</span>
                             <span class="score-box">${scoreAway}</span>
+                            <span class="team-name-away">${awayTeam.Nm}</span>
                         `;
                         matchesList.appendChild(row);
                     });
