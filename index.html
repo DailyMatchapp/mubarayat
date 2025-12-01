@@ -143,9 +143,9 @@
 
     <script>
         // --- JavaScript Logic ---
-
-        const API_URL = 'https://prod-cdn-mev-api.livescore.com/v1/api/app/date/soccer/20251201/1?locale=en';
-        
+       
+        const PROXY_FUNCTION_URL = 'https://[اسم موقعك على Netlify].netlify.app/.netlify/functions/fetch-matches'; 
+       
         const matchesList = document.getElementById('matches-list');
         const leagueDetailsOutput = document.getElementById('league-details-output');
         const matchModal = document.getElementById('match-modal');
