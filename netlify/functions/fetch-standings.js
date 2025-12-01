@@ -9,7 +9,7 @@ exports.handler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ error: 'Missing Stage ID (sid) in request' }) };
     }
 
-    // 🚩 نستخدم صيغة: SID/1/en وهي الأرجح للترتيب
+    // 🚩 الصيغة الأكثر ترجيحًا لجدول الترتيب
     const API_URL = `${API_BASE}${sid}/1/en`; 
     
     try {
