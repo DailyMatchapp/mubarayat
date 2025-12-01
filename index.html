@@ -56,7 +56,7 @@
         }
         .league-header:hover { background-color: var(--hover-color); }
         
-        /* 🚩 التعديل هنا: ترتيب الوقت والنتيجة في المنتصف */
+        /* 🚩 ترتيب الوقت والنتيجة في المنتصف */
         .match-row {
             /* 5 أعمدة: Team A | Score A | Status/Time | Score B | Team B */
             display: grid;
@@ -72,12 +72,12 @@
         .match-row:hover { background-color: var(--hover-color); }
         
         .team-name-display {
-            text-align: right; /* الفريق الأول (اليسار) */
+            text-align: right; 
             padding-right: 15px;
             font-weight: 500;
         }
         .team-name-away {
-            text-align: left; /* الفريق الثاني (اليمين) */
+            text-align: left; 
             padding-left: 15px;
             font-weight: 500;
         }
@@ -88,13 +88,12 @@
             text-align: center;
             color: var(--text-color);
             background-color: var(--hover-color);
-            padding: 5px 0; /* عرض النتيجة فقط */
+            padding: 5px 0; 
         }
         .center-status-time {
             font-weight: 600;
             text-align: center;
             font-size: 0.85em;
-            /* للتفريق بين الوقت والنتيجة */
             border-left: 1px solid var(--border-color);
             border-right: 1px solid var(--border-color);
             padding: 5px 0;
@@ -166,24 +165,79 @@
     <script>
         // --- JavaScript Logic (English) ---
 
+        // 🚩 Netlify Proxy URLs - Ensure these functions are correctly deployed!
         const PROXY_MATCHES_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-matches'; 
         const PROXY_STANDINGS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-standings'; 
         const PROXY_DETAILS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-details'; 
         
-        // ... (باقي تعريف المتغيرات)
+        const matchesList = document.getElementById('matches-list');
+        const appModal = document.getElementById('app-modal');
+        const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
+        const modalTitle = document.getElementById('modal-title');
+        const closeModalButton = document.getElementById('close-modal');
+        const loadingMessage = document.getElementById('loading-message');
 
         // ---------------------------------
-        // دوال الجلب (Fetching Functions)
+        // Generic Fetching Function
         // ---------------------------------
-        // ... (دوال fetchData, openModal, fetchStandings, fetchMatchDetails تبقى كما هي)
-        
+        async function fetchData(url, errorMsg) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`${errorMsg} Status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                return null;
+            }
+        }
+
+        // ... (دوال openModal, fetchStandings, fetchMatchDetails تبقى كما هي)
+
+        async function fetchMatchDetails(eid, home, away) {
+            openModal(`Loading Details: ${home} vs ${away}`, '<div class="loader"></div>');
+
+            const data = await fetchData(`${PROXY_DETAILS_URL}?eid=${eid}`, 'Failed to fetch match details.');
+
+            if (!data) {
+                openModal(`Error Fetching Details`, `<p style="color: red;">Could not fetch match details. Check Netlify Function (Status: 404/500).</p>`);
+                return;
+            }
+            
+            let html = `<h4>Full Match Details: ${home} vs ${away}</h4><hr>`;
+            
+            // Events (Goals, Cards)
+            html += '<h5>⚡️ Match Events:</h5>';
+            if (data.Events && data.Events.length > 0) {
+                data.Events.forEach(e => {
+                    html += `<p style="margin: 5px 0;">(${e.Min}') ${e.Nm} - ${e.Tnm}</p>`;
+                });
+            } else {
+                html += '<p>No events recorded yet.</p>';
+            }
+
+            // Head-to-Head (H2H)
+            html += '<hr><h5>⚔️ Head-to-Head (Previous Matches):</h5>';
+            if (data.H2H && data.H2H.length > 0) {
+                data.H2H.forEach(match => {
+                    html += `<p style="margin: 5px 0; font-size: 0.9em;">
+                        ${formatTime(match.Esd).split(' ')[0]} | ${match.T1nm} 
+                        <span style="font-weight: bold; color: var(--live-color);">${match.Tr1} - ${match.Tr2}</span> 
+                        ${match.T2nm}
+                    </p>`;
+                });
+            } else {
+                html += '<p>No Head-to-Head data available.</p>';
+            }
+            
+            openModal(`Details: ${home} vs ${away}`, html);
+        }
+
         // ---------------------------------
         // Formatting & Rendering
         // ---------------------------------
         
         function getStatusInfo(eps) {
             switch (eps) {
-                // إذا كانت 'NS' (لم تبدأ) نستخدم 'Time' كرمز لقراءة الوقت
                 case 'NS': return { text: 'Time', class: 'ns-status' };
                 case 'FT': return { text: 'FT', class: 'ft-status' };
                 case 'HT': return { text: 'HT', class: 'live-status' };
@@ -217,11 +271,19 @@
             matchesList.innerHTML = ''; 
 
             data.Stages.forEach(stage => {
+                // 🚩 تصحيح مشكلة undefined
                 const leagueName = stage.Snm || 'Unknown League';
                 const countryName = stage.Cnm || 'Unknown Country';
                 
-                // ... (بناء League Header)
-                
+                // League Header (Clickable for Standings)
+                const leagueHeader = document.createElement('div');
+                leagueHeader.className = 'league-header';
+                leagueHeader.innerHTML = `🏆 ${leagueName} - ${countryName}`;
+                leagueHeader.dataset.sid = stage.Sid;
+                leagueHeader.dataset.action = 'standings';
+                leagueHeader.dataset.leaguename = leagueName;
+                matchesList.appendChild(leagueHeader);
+
                 if (stage.Events && stage.Events.length > 0) {
                     stage.Events.forEach(event => {
                         // 🚩 التصحيح: قراءة آمنة للبيانات
@@ -247,6 +309,7 @@
                         row.dataset.home = homeTeam; // استخدام القيمة الآمنة
                         row.dataset.away = awayTeam; // استخدام القيمة الآمنة
                         
+                        // 🚩 الهيكل الجديد: Team A | Score A | Status/Time | Score B | Team B
                         row.innerHTML = `
                             <span class="team-name-display">${homeTeam}</span>
                             <span class="score-box">${scoreHome}</span>
@@ -262,11 +325,36 @@
             addInteractionListeners();
         }
 
-        // ... (باقي دوال Event Listeners)
-        
+        function addInteractionListeners() {
+            // ... (باقي كود Event Listeners)
+            document.querySelectorAll('[data-action]').forEach(element => {
+                element.addEventListener('click', (event) => {
+                    const action = event.currentTarget.dataset.action;
+                    
+                    if (action === 'standings') {
+                        const sid = event.currentTarget.dataset.sid;
+                        const leagueName = event.currentTarget.dataset.leaguename;
+                        fetchStandings(sid, leagueName);
+                    } 
+                    
+                    else if (action === 'details') {
+                        const eid = event.currentTarget.dataset.eid;
+                        const home = event.currentTarget.dataset.home;
+                        const away = event.currentTarget.dataset.away;
+                        fetchMatchDetails(eid, home, away);
+                    }
+                });
+            });
+
+            closeModalButton.addEventListener('click', () => appModal.style.display = "none");
+            window.addEventListener('click', (event) => {
+                if (event.target === appModal) {
+                    appModal.style.display = "none";
+                }
+            });
+        }
+
         renderMatches();
     </script>
-</body>
-</html>
 </body>
 </html>
