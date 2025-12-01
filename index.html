@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Score Dark Mode Mockup</title>
+    <title>Live Score Application</title>
     <style>
         /* --- Dark Mode CSS Styling --- */
         :root {
@@ -58,7 +58,6 @@
         
         /* 🚩 ترتيب الوقت والنتيجة في المنتصف */
         .match-row {
-            /* 5 أعمدة: Team A | Score A | Status/Time | Score B | Team B */
             display: grid;
             grid-template-columns: 4fr 1fr 1.5fr 1fr 4fr; 
             align-items: center;
@@ -142,6 +141,12 @@
             background-color: var(--hover-color); color: var(--primary-color);
         }
         .modal-body h5 { color: var(--live-color); }
+
+        /* Style for Team Logos */
+        .team-name-display img, .team-name-away img {
+            height: 20px; 
+            vertical-align: middle; 
+        }
     </style>
 </head>
 <body>
@@ -163,12 +168,16 @@
     </div>
 
     <script>
-        // --- JavaScript Logic (English) ---
+        // --- JavaScript Logic ---
 
-        // 🚩 Netlify Proxy URLs - Ensure these functions are correctly deployed!
-        const PROXY_MATCHES_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-matches'; 
-        const PROXY_STANDINGS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-standings'; 
-        const PROXY_DETAILS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-details'; 
+        // 🚩 الروابط الأساسية
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        const LOGO_BASE_URL = 'https://assets.livescore.com/soccer/badge/100x100/';
+
+        // 🚩 روابط LiveScore API (تاريخ اليوم هو 20251201)
+        const LIVE_SCORE_MATCHES_URL = 'https://prod-public-api.livescore.com/v1/api/app/date/soccer/20251201/0';
+        const LIVE_SCORE_STANDINGS_URL = 'https://prod-public-api.livescore.com/v1/api/app/division/soccer/{sid}/0'; 
+        const LIVE_SCORE_DETAILS_URL = 'https://prod-public-api.livescore.com/v1/api/app/match/{eid}/0/1/en'; 
         
         const matchesList = document.getElementById('matches-list');
         const appModal = document.getElementById('app-modal');
@@ -178,21 +187,25 @@
         const loadingMessage = document.getElementById('loading-message');
 
         // ---------------------------------
-        // Generic Fetching Function (موضعها في الأعلى لحل مشكلة ReferenceError)
+        // Generic Fetching Function
         // ---------------------------------
-        async function fetchData(url, errorMsg) {
+        async function fetchData(externalUrl, errorMsg) {
+            // دمج رابط البروكسي مع رابط الـ API
+            const proxyUrl = CORS_PROXY + encodeURIComponent(externalUrl);
+            
             try {
-                const response = await fetch(url);
+                const response = await fetch(proxyUrl);
                 if (!response.ok) throw new Error(`${errorMsg} Status: ${response.status}`);
                 return await response.json();
             } catch (error) {
                 console.error("Fetch Error:", error);
+                openModal("Connection Error", `<p style="color: red;">Failed to fetch data: ${errorMsg}. Please check the API link or the CORS Proxy service.</p>`);
                 return null;
             }
         }
         
         // ---------------------------------
-        // Helper Functions (تنسيق الحالة والوقت)
+        // Helper Functions 
         // ---------------------------------
 
         function getStatusInfo(eps) {
@@ -206,15 +219,40 @@
             }
         }
 
+        // 🚩 الدالة المصححة لتحويل التوقيت إلى التوقيت المحلي (مع Fallback)
         function formatTime(esd) {
-            // التحقق من وجود القيمة وطولها (14 خانة)
-            if (!esd || typeof esd !== 'string' || esd.length < 14) return 'N/A';
-            
-            // استخراج الوقت فقط (HH:MM) من الخانات 8 إلى 12
+            if (!esd || typeof esd !== 'string' || esd.length < 14) {
+                return 'N/A';
+            }
+
+            // فك شيفرة التاريخ (YYYYMMDDHHMMSS)
+            const year = esd.substring(0, 4);
+            const month = esd.substring(4, 6);
+            const day = esd.substring(6, 8);
             const hour = esd.substring(8, 10);
             const minute = esd.substring(10, 12);
-            
-            return `${hour}:${minute}`; 
+
+            try {
+                const jsMonth = month - 1; 
+                
+                // بناء كائن Date باستخدام الدالة UTC
+                const date = new Date(Date.UTC(year, jsMonth, day, hour, minute));
+                
+                if (isNaN(date.getTime())) {
+                    throw new Error('Invalid Date Parsing');
+                }
+
+                // عرض التوقيت بالتنسيق المحلي (الساعة والدقائق) للمستخدم
+                return date.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: false 
+                });
+                
+            } catch (e) {
+                // العرض الاحتياطي: عرض التاريخ والوقت الخام (غير محول)
+                return `${day}/${month} ${hour}:${minute}`; 
+            }
         }
 
         function openModal(title, content) {
@@ -224,18 +262,17 @@
         }
         
         // ---------------------------------
-        // MODAL/Interaction Functions (الآن لعرض البيانات المنسقة مجدداً)
+        // MODAL/Interaction Functions
         // ---------------------------------
         
         async function fetchStandings(sid, leagueName) {
             openModal(`Loading Standings: ${leagueName}`, '<div class="loader"></div>');
+            
+            const url = LIVE_SCORE_STANDINGS_URL.replace('{sid}', sid);
 
-            const data = await fetchData(`${PROXY_STANDINGS_URL}?sid=${sid}`, 'Failed to fetch standings.');
+            const data = await fetchData(url, 'Failed to fetch standings.');
 
-            if (!data) {
-                openModal(`Error Fetching Standings`, `<p style="color: red;">Could not fetch standings data. Check Netlify Function (Status: 404/500).</p>`);
-                return;
-            }
+            if (!data) return;
             
             let html = `<h4>${leagueName} Table</h4>`;
             
@@ -260,13 +297,12 @@
 
         async function fetchMatchDetails(eid, home, away) {
             openModal(`Loading Details: ${home} vs ${away}`, '<div class="loader"></div>');
+            
+            const url = LIVE_SCORE_DETAILS_URL.replace('{eid}', eid);
 
-            const data = await fetchData(`${PROXY_DETAILS_URL}?eid=${eid}`, 'Failed to fetch match details.');
+            const data = await fetchData(url, 'Failed to fetch match details.');
 
-            if (!data) {
-                openModal(`Error Fetching Details`, `<p style="color: red;">Could not fetch match details. Check Netlify Function (Status: 404/500).</p>`);
-                return;
-            }
+            if (!data) return;
             
             let html = `<h4>Full Match Details: ${home} vs ${away}</h4><hr>`;
             
@@ -284,8 +320,9 @@
             html += '<hr><h5>⚔️ Head-to-Head (Previous Matches):</h5>';
             if (data.H2H && data.H2H.length > 0) {
                 data.H2H.forEach(match => {
+                    const formattedTime = formatTime(match.Esd || ''); 
                     html += `<p style="margin: 5px 0; font-size: 0.9em;">
-                        ${formatTime(match.Esd)} | ${match.T1nm} 
+                        ${formattedTime} | ${match.T1nm} 
                         <span style="font-weight: bold; color: var(--live-color);">${match.Tr1} - ${match.Tr2}</span> 
                         ${match.T2nm}
                     </p>`;
@@ -302,12 +339,12 @@
         // ---------------------------------
 
         async function renderMatches() {
-            const data = await fetchData(PROXY_MATCHES_URL, 'Failed to fetch match list.'); 
+            const data = await fetchData(LIVE_SCORE_MATCHES_URL, 'Failed to fetch match list.'); 
 
             if (loadingMessage) loadingMessage.remove(); 
             
             if (!data || !data.Stages) {
-                matchesList.innerHTML = `<p style="color: red; text-align: center;">🔴 Failed to load initial data. Check Netlify function: ${PROXY_MATCHES_URL}</p>`;
+                matchesList.innerHTML = `<p style="color: red; text-align: center;">🔴 Failed to load data. Check API URL or Proxy.</p>`;
                 return;
             }
 
@@ -331,12 +368,15 @@
                         const homeTeam = event.T1 ? (event.T1[0].Nm || 'Unknown') : 'Unknown';
                         const awayTeam = event.T2 ? (event.T2[0].Nm || 'Unknown') : 'Unknown';
                         
+                        // Logos
+                        const homeLogo = event.T1 ? (event.T1[0].Img || '') : '';
+                        const awayLogo = event.T2 ? (event.T2[0].Img || '') : '';
+
                         const eventStatus = event.Eps || 'NS'; 
                         const statusInfo = getStatusInfo(eventStatus);
                         
-                        const matchTime = formatTime(event.Esd); 
+                        const matchTime = formatTime(event.Esd || ''); 
                         
-                        // عرض الوقت فقط إذا كانت الحالة 'Time' (أي 'NS')
                         const displayStatusTime = statusInfo.text === 'Time' ? matchTime : statusInfo.text;
                         
                         const scoreHome = event.Tr1 || 0;
@@ -351,11 +391,17 @@
                         row.dataset.away = awayTeam; 
                         
                         row.innerHTML = `
-                            <span class="team-name-display">${homeTeam}</span>
+                            <span class="team-name-display">
+                                ${homeTeam} 
+                                ${homeLogo ? `<img src="${LOGO_BASE_URL}${homeLogo}" alt="${homeTeam}" style="margin-left: 5px;">` : ''}
+                            </span>
                             <span class="score-box">${scoreHome}</span>
                             <span class="center-status-time ${statusInfo.class}">${displayStatusTime}</span>
                             <span class="score-box">${scoreAway}</span>
-                            <span class="team-name-away">${awayTeam}</span>
+                            <span class="team-name-away">
+                                ${awayLogo ? `<img src="${LOGO_BASE_URL}${awayLogo}" alt="${awayTeam}" style="margin-right: 5px;">` : ''}
+                                ${awayTeam}
+                            </span>
                         `;
                         matchesList.appendChild(row);
                     });
