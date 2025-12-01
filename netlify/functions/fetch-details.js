@@ -9,8 +9,8 @@ exports.handler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ error: 'Missing Match ID (eid) in request' }) };
     }
 
-    // 🚩 نستخدم الصيغة: EID/0/en وهي صيغة شائعة لجلب تفاصيل الأحداث
-    const API_URL = `${API_BASE}${eid}/0/en`; 
+    // 🚩 الصيغة الأكثر اكتمالاً لجلب تفاصيل المباراة (Events/H2H)
+    const API_URL = `${API_BASE}${eid}/0/1/en`; 
     
     try {
         const response = await fetch(API_URL);
