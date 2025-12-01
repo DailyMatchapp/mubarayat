@@ -34,7 +34,7 @@
             margin-bottom: 15px;
             padding: 15px;
             transition: background-color 0.3s;
-            border-right: 5px solid #007bff; /* لتمييز البطاقة */
+            border-right: 5px solid #007bff;
         }
         .match-card:hover {
             background-color: #dcdfe3;
@@ -143,38 +143,33 @@
 
     <script>
         // --- JavaScript Logic ---
-       
-       const PROXY_FUNCTION_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-matches'; 
-       
+
+        // 🚩 الرابط الصحيح للخادم الوكيل على Netlify (تم التصحيح)
+        const PROXY_FUNCTION_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-matches';
+        
         const matchesList = document.getElementById('matches-list');
         const leagueDetailsOutput = document.getElementById('league-details-output');
         const matchModal = document.getElementById('match-modal');
         const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
         const closeModalButton = document.getElementById('close-modal');
+        const loadingMessage = document.getElementById('loading-message');
+
 
         /**
-         * 1. جلب البيانات من API
+         * 1. دالة جلب البيانات من الخادم الوكيل
          */
         async function fetchMatchesData() {
             try {
-                // في ملف index.html
-// تأكد أنك تستخدم المتغير الصحيح في دالة fetchMatchesData
-async function fetchMatchesData() {
-    try {
-        // استخدم PROXY_FUNCTION_URL بدلاً من API_URL
-        const response = await fetch(PROXY_FUNCTION_URL); 
-        // ... باقي الكود
+                // نستخدم PROXY_FUNCTION_URL الذي لا يحتوي على قيود CORS
+                const response = await fetch(PROXY_FUNCTION_URL);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Proxy error! status: ${response.status}`);
                 }
+                
                 return await response.json();
             } catch (error) {
                 console.error("Fetch Error:", error);
-                matchesList.innerHTML = `<p style="color: red;">
-                    🔴 **خطأ في جلب البيانات:** لم نتمكن من الوصول إلى API. 
-                    قد يكون بسبب قيود CORS أو مشكلة في الرابط.
-                    ${error.message}
-                </p>`;
                 return null;
             }
         }
@@ -184,22 +179,30 @@ async function fetchMatchesData() {
          */
         async function renderMatches() {
             const data = await fetchMatchesData();
+
+            // [التصحيح 1]: إزالة رسالة التحميل أولاً
+            if (loadingMessage) {
+                loadingMessage.remove(); 
+            }
+            
             if (!data || !data.Stages) {
-                document.getElementById('loading-message').style.display = 'none';
+                // [التصحيح 2]: في حالة فشل الجلب، نعرض رسالة الخطأ مباشرة.
+                matchesList.innerHTML = `<p style="color: red; padding: 10px;">🔴 **فشل في جلب البيانات التلقائية.** يرجى التأكد من أن Netlify Proxy Function تعمل بشكل سليم على الرابط: <code>${PROXY_FUNCTION_URL}</code></p>`;
                 return;
             }
 
-            matchesList.innerHTML = ''; // إزالة رسالة التحميل
+            matchesList.innerHTML = ''; // إفراغ قائمة المباريات
 
             data.Stages.forEach(stage => {
                 const leagueName = stage.Snm;
                 const countryName = stage.Cnm;
+                // تجميع تفاصيل الدوري لعرضها عند النقر
                 const leagueDetails = `البلد: ${countryName} | معرف الدوري (SID): ${stage.Sid} | الشعار: ${stage.badgeUrl || 'لا يوجد'}`;
 
                 // إنشاء قسم للدوري
                 const leagueHeader = document.createElement('h3');
                 leagueHeader.className = 'league-name';
-                leagueHeader.style.cursor = 'default'; // لا نحتاج أن يكون النص كله قابل للنقر كدوري
+                leagueHeader.style.cursor = 'default'; 
                 leagueHeader.innerHTML = `🏆 ${leagueName} - ${countryName}`;
                 matchesList.appendChild(leagueHeader);
 
@@ -211,7 +214,9 @@ async function fetchMatchesData() {
                         
                         const statusText = getStatusText(event.Eps);
                         const startTime = formatTime(event.Esd);
-                        const teamDetails = `
+                        
+                        // تفاصيل المباراة التي ستعرض في المودال (يمكن تعديلها لجلب المزيد عبر EID)
+                        const matchDetailsForModal = `
                             **المباراة:** ${homeTeam.Nm} ضد ${awayTeam.Nm}.<br>
                             **الحالة:** ${statusText}<br>
                             **وقت البدء:** ${startTime}<br>
@@ -224,9 +229,9 @@ async function fetchMatchesData() {
                         card.innerHTML = `
                             <div class="match-info">
                                 <span class="league-name" data-type="league" data-details="${leagueDetails}">${leagueName}</span>
-                                <span class="team-name" data-type="match" data-hometeam="${homeTeam.Nm}" data-awayteam="${awayTeam.Nm}" data-status="${statusText}" data-details="${teamDetails}">${homeTeam.Nm} (${homeTeam.Abr})</span>
+                                <span class="team-name" data-type="match" data-hometeam="${homeTeam.Nm}" data-awayteam="${awayTeam.Nm}" data-status="${statusText}" data-details="${matchDetailsForModal}">${homeTeam.Nm} (${homeTeam.Abr})</span>
                                 <span class="time-status">${statusText === 'لم تبدأ' ? startTime.split(' ')[1] : statusText}</span>
-                                <span class="team-name" data-type="match" data-hometeam="${homeTeam.Nm}" data-awayteam="${awayTeam.Nm}" data-status="${statusText}" data-details="${teamDetails}">${awayTeam.Nm} (${awayTeam.Abr})</span>
+                                <span class="team-name" data-type="match" data-hometeam="${homeTeam.Nm}" data-awayteam="${awayTeam.Nm}" data-status="${statusText}" data-details="${matchDetailsForModal}">${awayTeam.Nm} (${awayTeam.Abr})</span>
                             </div>
                         `;
                         matchesList.appendChild(card);
@@ -240,10 +245,9 @@ async function fetchMatchesData() {
         }
 
         /**
-         * 3. دوال مساعدة (Helper Functions)
+         * 3. دوال مساعدة
          */
 
-        // ترجمة حالة المباراة
         function getStatusText(eps) {
             switch (eps) {
                 case 'NS': return 'لم تبدأ';
@@ -256,7 +260,6 @@ async function fetchMatchesData() {
             }
         }
 
-        // تنسيق وقت البدء (20251201210000 -> 01/12/2025 21:00)
         function formatTime(esd) {
             if (!esd || esd.length !== 14) return 'غير محدد';
             const year = esd.substring(0, 4);
@@ -269,7 +272,7 @@ async function fetchMatchesData() {
 
 
         /**
-         * 4. دالة فتح النافذة المنبثقة (Modal) لتفاصيل المباراة
+         * 4. دالة فتح النافذة المنبثقة (Modal)
          */
         function openModal(homeTeam, awayTeam, status, details) {
             modalContentPlaceholder.innerHTML = `
@@ -281,7 +284,7 @@ async function fetchMatchesData() {
                 <h4>📝 التفاصيل الأساسية:</h4>
                 <p>${details}</p>
                 
-                <p style="margin-top: 30px; color: #888;">**ملاحظة:** يتم عرض البيانات الأساسية المتاحة في API. لعرض إحصائيات مفصلة (أهداف، بطاقات، إحصائيات) في مودال كامل الشاشة، تحتاج إلى إجراء استدعاء API آخر مخصص لتفاصيل المباراة باستخدام (EID) الذي تم جلبه.</p>
+                <p style="margin-top: 30px; color: #888;">**ملاحظة:** لعرض تفاصيل إضافية (مثل الأهداف والإحصائيات)، ستحتاج إلى جلب المزيد من البيانات عبر معرف المباراة (EID) في نقطة نهاية (Endpoint) منفصلة.</p>
             `;
             matchModal.style.display = "block";
         }
@@ -298,7 +301,6 @@ async function fetchMatchesData() {
                     const type = event.target.dataset.type;
                     
                     if (type === 'league') {
-                        // النقر على اسم الدوري (عرض تفاصيله في الصندوق الصغير)
                         const leagueName = event.target.textContent;
                         const details = event.target.dataset.details;
                         leagueDetailsOutput.innerHTML = `
@@ -308,9 +310,8 @@ async function fetchMatchesData() {
                         `;
 
                     } else if (type === 'match') {
-                        // النقر على اسم الفريق (عرض تفاصيل المباراة في المودال)
                         const homeTeam = event.target.dataset.hometeam;
-                        const awayTeam = event.target.awayteam;
+                        const awayTeam = event.target.dataset.awayteam;
                         const status = event.target.dataset.status;
                         const details = event.target.dataset.details;
 
@@ -319,7 +320,6 @@ async function fetchMatchesData() {
                 });
             });
 
-            // إغلاق المودال عند النقر على X أو خارجه
             closeModalButton.addEventListener('click', () => matchModal.style.display = "none");
             window.addEventListener('click', (event) => {
                 if (event.target === matchModal) {
