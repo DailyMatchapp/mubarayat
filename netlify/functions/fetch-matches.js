@@ -3,10 +3,8 @@
 const API_BASE = 'https://prod-cdn-mev-api.livescore.com/v1/api/app/date/soccer/';
 
 exports.handler = async (event) => {
-    // نفترض أنك تمرر تاريخ اليوم (مثلاً 20251201) في Query String، أو نستخدم تاريخ ثابت.
-    // لضمان العمل، سنفترض تاريخاً عاماً مؤقتاً هنا.
-    // يفضل تمرير التاريخ من الواجهة الأمامية.
-    const date = event.queryStringParameters.date || '20251201'; // استخدم تاريخ اليوم
+    // نستخدم تاريخ ثابت أو نطلب تمريره
+    const date = event.queryStringParameters.date || '20251201';
 
     const API_URL = `${API_BASE}${date}/1`; 
     
