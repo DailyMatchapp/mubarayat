@@ -1,12 +1,13 @@
 // netlify/functions/fetch-details.js
 
+// الرابط الأساسي لجلب تفاصيل مباراة واحدة (نستخدم EID)
+// يجب أن يكون هذا الرابط هو الصحيح لجلب تفاصيل المباراة (H2H, Events)
 const API_BASE = 'https://prod-cdn-mev-api.livescore.com/v1/api/app/event/soccer/';
 
 exports.handler = async (event) => {
-    // 1. استخراج 'eid' (معرّف المباراة) من طلب المتصفح
+    // 1. استخراج 'eid' (معرّف المباراة) من الطلب
     const eid = event.queryStringParameters.eid; 
 
-    // التحقق الأساسي: هل تم إرسال المعرّف؟
     if (!eid) {
         return { 
             statusCode: 400, 
@@ -14,23 +15,24 @@ exports.handler = async (event) => {
         };
     }
 
-    // 2. بناء رابط API الخارجي باستخدام المعرّف
-    // نُضيف المعرّف eid إلى رابط API الأساسي، مع افتراض أن LiveScore لا يحتاج لأي معلمات أخرى هنا.
+    // 2. بناء رابط API الخارجي
+    // 🚩 التصحيح هنا: نستخدم EID فقط مع إضافة بارامترات الموقع إن وجدت.
+    // جرب هذا الرابط، وإذا لم يعمل، قم بمطابقته يدوياً مع ما تراه في أدوات المطور على موقع LiveScore.
     const API_URL = `${API_BASE}${eid}/1?locale=en`; 
     
-    console.log(`Fetching details for EID: ${eid} from ${API_URL}`); // تسجيل للمساعدة في تتبع الأخطاء
+    console.log(`Attempting to fetch details from: ${API_URL}`);
 
     try {
-        // 3. جلب البيانات من API LiveScore (من الخادم إلى الخادم)
+        // 3. جلب البيانات من API LiveScore 
         const response = await fetch(API_URL);
 
         // 4. التحقق من حالة الاستجابة من LiveScore
         if (!response.ok) {
-            // إذا كان الرد 404 أو 500، نعيد هذا الخطأ إلى المتصفح
+            // إعادة خطأ 404 أو 500 إذا كان من مصدر خارجي
             return {
                 statusCode: response.status, 
                 body: JSON.stringify({ 
-                    error: `External API responded with status ${response.status}`,
+                    error: `External API responded with status ${response.status} for URL: ${API_URL}`,
                     url: API_URL
                 })
             };
@@ -38,17 +40,17 @@ exports.handler = async (event) => {
 
         const data = await response.json();
 
-        // 5. إرجاع البيانات إلى المتصفح مع رأس CORS (تجاوز القيود)
+        // 5. إرجاع البيانات إلى المتصفح مع رأس CORS
         return {
             statusCode: 200,
             headers: { 
-                'Access-Control-Allow-Origin': '*', // مفتاح تجاوز CORS
+                'Access-Control-Allow-Origin': '*', 
                 'Content-Type': 'application/json' 
             },
             body: JSON.stringify(data)
         };
     } catch (error) {
-        // في حالة وجود خطأ في الاتصال بالشبكة
+        // خطأ في الاتصال بالشبكة
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
 };
