@@ -178,7 +178,7 @@
         const loadingMessage = document.getElementById('loading-message');
 
         // ---------------------------------
-        // Generic Fetching Function (نقلها للأعلى لحل مشكلة ReferenceError)
+        // Generic Fetching Function (موضعها في الأعلى لحل مشكلة ReferenceError)
         // ---------------------------------
         async function fetchData(url, errorMsg) {
             try {
@@ -192,7 +192,7 @@
         }
         
         // ---------------------------------
-        // Helper Functions
+        // Helper Functions (تنسيق الحالة والوقت)
         // ---------------------------------
 
         function getStatusInfo(eps) {
@@ -207,7 +207,7 @@
         }
 
         function formatTime(esd) {
-            // 🚩 التصحيح الأخير: التحقق من وجود القيمة وطولها (14 خانة)
+            // التحقق من وجود القيمة وطولها (14 خانة)
             if (!esd || typeof esd !== 'string' || esd.length < 14) return 'N/A';
             
             // استخراج الوقت فقط (HH:MM) من الخانات 8 إلى 12
@@ -224,7 +224,7 @@
         }
         
         // ---------------------------------
-        // MODAL/Interaction Functions
+        // MODAL/Interaction Functions (الآن لعرض البيانات المنسقة مجدداً)
         // ---------------------------------
         
         async function fetchStandings(sid, leagueName) {
@@ -285,7 +285,7 @@
             if (data.H2H && data.H2H.length > 0) {
                 data.H2H.forEach(match => {
                     html += `<p style="margin: 5px 0; font-size: 0.9em;">
-                        ${formatTime(match.Esd).split(' ')[0]} | ${match.T1nm} 
+                        ${formatTime(match.Esd)} | ${match.T1nm} 
                         <span style="font-weight: bold; color: var(--live-color);">${match.Tr1} - ${match.Tr2}</span> 
                         ${match.T2nm}
                     </p>`;
@@ -302,7 +302,6 @@
         // ---------------------------------
 
         async function renderMatches() {
-            // الآن fetchData مُعرفة بفضل نقلها للأعلى
             const data = await fetchData(PROXY_MATCHES_URL, 'Failed to fetch match list.'); 
 
             if (loadingMessage) loadingMessage.remove(); 
