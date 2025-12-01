@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض مباريات LiveScore - متكامل</title>
+    <title>عرض مباريات - كل شيء في مودال</title>
     <style>
         /* --- CSS Styling --- */
         body {
@@ -12,7 +12,7 @@
             color: #333;
             margin: 0;
             padding: 20px;
-            text-align: right; /* دعم RTL */
+            text-align: right; 
         }
         .container {
             max-width: 900px;
@@ -28,13 +28,22 @@
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
+        /* تصميم عنوان الدوري الرئيسي */
+        .league-title-header { 
+            color: #007bff;
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 1.3em;
+        }
         .match-card {
             background-color: #e9ecef;
             border-radius: 8px;
             margin-bottom: 15px;
             padding: 15px;
             transition: background-color 0.3s;
-            border-right: 5px solid #007bff;
+            border-right: 5px solid #28a745; /* لون مختلف للمباراة */
         }
         .match-card:hover {
             background-color: #dcdfe3;
@@ -44,20 +53,18 @@
             justify-content: space-between;
             align-items: center;
         }
-        .league-name {
+        .league-name, .team-name {
             font-weight: bold;
             color: #28a745;
             cursor: pointer;
             text-decoration: underline;
-            flex-basis: 25%;
-        }
-        .team-name {
-            font-weight: 600;
-            color: #333;
             flex-grow: 1;
-            text-align: center;
-            cursor: pointer; 
             padding: 0 10px;
+            text-align: center;
+        }
+        .league-name {
+             color: #007bff; /* لون مختلف لاسم الدوري في البطاقة */
+             flex-basis: 25%;
         }
         .time-status {
             font-weight: bold;
@@ -106,16 +113,6 @@
             padding-bottom: 5px;
             margin-top: 20px;
         }
-
-        /* صندوق تفاصيل الدوري */
-        .details-box {
-            background-color: #fff3cd;
-            border: 1px solid #ffc34d;
-            padding: 15px;
-            margin-top: 10px;
-            border-radius: 5px;
-            color: #856404;
-        }
     </style>
 </head>
 <body>
@@ -124,12 +121,6 @@
         <h2 id="main-title">تحميل مباريات: 2025/12/01</h2>
         <div id="matches-list">
             <p id="loading-message">جاري تحميل البيانات...</p>
-        </div>
-
-        <hr>
-
-        <div id="league-details-output" class="details-box">
-            <p>انقر على اسم **دوري** لعرض تفاصيله (مكان شعار الدوري، البلد، الخ).</p>
         </div>
     </div>
 
@@ -144,11 +135,10 @@
     <script>
         // --- JavaScript Logic ---
 
-        // 🚩 الرابط الصحيح للخادم الوكيل على Netlify (تم التصحيح)
+        // 🚩 الرابط الصحيح للخادم الوكيل على Netlify (يجب التأكد من أنه يعمل)
         const PROXY_FUNCTION_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-matches';
         
         const matchesList = document.getElementById('matches-list');
-        const leagueDetailsOutput = document.getElementById('league-details-output');
         const matchModal = document.getElementById('match-modal');
         const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
         const closeModalButton = document.getElementById('close-modal');
@@ -160,7 +150,6 @@
          */
         async function fetchMatchesData() {
             try {
-                // نستخدم PROXY_FUNCTION_URL الذي لا يحتوي على قيود CORS
                 const response = await fetch(PROXY_FUNCTION_URL);
                 
                 if (!response.ok) {
@@ -180,29 +169,36 @@
         async function renderMatches() {
             const data = await fetchMatchesData();
 
-            // [التصحيح 1]: إزالة رسالة التحميل أولاً
             if (loadingMessage) {
                 loadingMessage.remove(); 
             }
             
             if (!data || !data.Stages) {
-                // [التصحيح 2]: في حالة فشل الجلب، نعرض رسالة الخطأ مباشرة.
                 matchesList.innerHTML = `<p style="color: red; padding: 10px;">🔴 **فشل في جلب البيانات التلقائية.** يرجى التأكد من أن Netlify Proxy Function تعمل بشكل سليم على الرابط: <code>${PROXY_FUNCTION_URL}</code></p>`;
                 return;
             }
 
-            matchesList.innerHTML = ''; // إفراغ قائمة المباريات
+            matchesList.innerHTML = ''; 
 
             data.Stages.forEach(stage => {
                 const leagueName = stage.Snm;
                 const countryName = stage.Cnm;
-                // تجميع تفاصيل الدوري لعرضها عند النقر
-                const leagueDetails = `البلد: ${countryName} | معرف الدوري (SID): ${stage.Sid} | الشعار: ${stage.badgeUrl || 'لا يوجد'}`;
+                
+                // تجميع تفاصيل الدوري لعرضها في المودال عند النقر على اسمه
+                const leagueDetails = `
+                    <h3>🏆 تفاصيل الدوري: ${leagueName}</h3>
+                    <p><strong>البلد:</strong> ${countryName}</p>
+                    <p><strong>معرّف النظام (SID):</strong> ${stage.Sid}</p>
+                    <p><strong>لون التمييز:</strong> ${stage.firstColor || 'لا يوجد'}</p>
+                    <p><strong>رابط الشعار:</strong> ${stage.badgeUrl || 'لا يوجد'}</p>
+                    <hr>
+                    <h4>ملخص المباريات المجدولة في هذا الدوري:</h4>
+                `;
 
-                // إنشاء قسم للدوري
+
+                // إنشاء قسم لعنوان الدوري
                 const leagueHeader = document.createElement('h3');
-                leagueHeader.className = 'league-name';
-                leagueHeader.style.cursor = 'default'; 
+                leagueHeader.className = 'league-title-header'; 
                 leagueHeader.innerHTML = `🏆 ${leagueName} - ${countryName}`;
                 matchesList.appendChild(leagueHeader);
 
@@ -215,29 +211,34 @@
                         const statusText = getStatusText(event.Eps);
                         const startTime = formatTime(event.Esd);
                         
-                        // تفاصيل المباراة التي ستعرض في المودال (يمكن تعديلها لجلب المزيد عبر EID)
+                        // تفاصيل المباراة التي ستعرض في المودال عند النقر على الفريق
                         const matchDetailsForModal = `
-                            **المباراة:** ${homeTeam.Nm} ضد ${awayTeam.Nm}.<br>
-                            **الحالة:** ${statusText}<br>
-                            **وقت البدء:** ${startTime}<br>
-                            **معرف المباراة (EID):** ${event.Eid}
-                            ${event.Media ? `<br>**البث المتاح:** ${event.Media[112] ? event.Media[112][0].eventId : 'غير محدد'}` : ''}
+                            <h3>⚽️ تفاصيل المباراة: ${homeTeam.Nm} vs ${awayTeam.Nm}</h3>
+                            <p><strong>الدوري:</strong> ${leagueName} (${countryName})</p>
+                            <p><strong>الحالة:</strong> ${statusText}</p>
+                            <p><strong>وقت البدء:</strong> ${startTime}</p>
+                            <hr>
+                            <p><strong>معرّف المباراة (EID):</strong> ${event.Eid}</p>
+                            ${event.Media ? `<h4>📺 البث المتاح:</h4><p>${event.Media[112] ? event.Media[112][0].eventId : 'غير محدد'}</p>` : ''}
                         `;
                         
                         const card = document.createElement('div');
                         card.className = 'match-card';
                         card.innerHTML = `
                             <div class="match-info">
-                                <span class="league-name" data-type="league" data-details="${leagueDetails}">${leagueName}</span>
-                                <span class="team-name" data-type="match" data-hometeam="${homeTeam.Nm}" data-awayteam="${awayTeam.Nm}" data-status="${statusText}" data-details="${matchDetailsForModal}">${homeTeam.Nm} (${homeTeam.Abr})</span>
+                                <span class="league-name" data-type="detail" data-title="تفاصيل الدوري" data-content="${leagueDetails}">${leagueName}</span>
+                                
+                                <span class="team-name" data-type="detail" data-title="${homeTeam.Nm} vs ${awayTeam.Nm}" data-content="${matchDetailsForModal}">${homeTeam.Nm} (${homeTeam.Abr})</span>
+                                
                                 <span class="time-status">${statusText === 'لم تبدأ' ? startTime.split(' ')[1] : statusText}</span>
-                                <span class="team-name" data-type="match" data-hometeam="${homeTeam.Nm}" data-awayteam="${awayTeam.Nm}" data-status="${statusText}" data-details="${matchDetailsForModal}">${awayTeam.Nm} (${awayTeam.Abr})</span>
+                                
+                                <span class="team-name" data-type="detail" data-title="${homeTeam.Nm} vs ${awayTeam.Nm}" data-content="${matchDetailsForModal}">${awayTeam.Nm} (${awayTeam.Abr})</span>
                             </div>
                         `;
                         matchesList.appendChild(card);
                     });
                 } else {
-                     matchesList.innerHTML += `<p style="padding: 10px; color: #666;">لا توجد مباريات مُجدولة لهذا الدوري في هذا التاريخ.</p>`;
+                     matchesList.innerHTML += `<p style="padding: 10px; color: #666;">لا توجد مباريات مُجدولة لهذا الدوري.</p>`;
                 }
             });
 
@@ -272,20 +273,11 @@
 
 
         /**
-         * 4. دالة فتح النافذة المنبثقة (Modal)
+         * 4. دالة فتح النافذة المنبثقة (Modal) العامة
          */
-        function openModal(homeTeam, awayTeam, status, details) {
-            modalContentPlaceholder.innerHTML = `
-                <div style="text-align: center;">
-                    <h3>مباراة: ${homeTeam} ضد ${awayTeam}</h3>
-                    <h4 style="color: #dc3545;">الحالة: ${status}</h4>
-                </div>
-                
-                <h4>📝 التفاصيل الأساسية:</h4>
-                <p>${details}</p>
-                
-                <p style="margin-top: 30px; color: #888;">**ملاحظة:** لعرض تفاصيل إضافية (مثل الأهداف والإحصائيات)، ستحتاج إلى جلب المزيد من البيانات عبر معرف المباراة (EID) في نقطة نهاية (Endpoint) منفصلة.</p>
-            `;
+        function openModal(title, content) {
+            modalContentPlaceholder.innerHTML = content;
+            // يمكن إضافة العنوان لـ h3 داخل content نفسه
             matchModal.style.display = "block";
         }
 
@@ -294,29 +286,15 @@
          * 5. دالة معالجة تفاعل النقر
          */
         function addInteractionListeners() {
-            document.querySelectorAll('.league-name, .team-name').forEach(element => {
+            document.querySelectorAll('[data-type="detail"]').forEach(element => {
                 element.addEventListener('click', (event) => {
                     event.stopPropagation();
                     
-                    const type = event.target.dataset.type;
-                    
-                    if (type === 'league') {
-                        const leagueName = event.target.textContent;
-                        const details = event.target.dataset.details;
-                        leagueDetailsOutput.innerHTML = `
-                            <h4>📄 معلومات عن الدوري:</h4>
-                            <p>الدوري: <strong>${leagueName}</strong></p>
-                            <p>${details}</p>
-                        `;
+                    // استخدام Data Attributes لفتح المودال مباشرة
+                    const title = event.target.dataset.title;
+                    const content = event.target.dataset.content;
 
-                    } else if (type === 'match') {
-                        const homeTeam = event.target.dataset.hometeam;
-                        const awayTeam = event.target.dataset.awayteam;
-                        const status = event.target.dataset.status;
-                        const details = event.target.dataset.details;
-
-                        openModal(homeTeam, awayTeam, status, details);
-                    }
+                    openModal(title, content);
                 });
             });
 
