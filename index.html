@@ -178,7 +178,7 @@
         const loadingMessage = document.getElementById('loading-message');
 
         // ---------------------------------
-        // Generic Fetching Function
+        // Generic Fetching Function (نقلها للأعلى لحل مشكلة ReferenceError)
         // ---------------------------------
         async function fetchData(url, errorMsg) {
             try {
@@ -190,8 +190,73 @@
                 return null;
             }
         }
+        
+        // ---------------------------------
+        // Helper Functions
+        // ---------------------------------
 
-        // ... (دوال openModal, fetchStandings, fetchMatchDetails تبقى كما هي)
+        function getStatusInfo(eps) {
+            switch (eps) {
+                case 'NS': return { text: 'Time', class: 'ns-status' };
+                case 'FT': return { text: 'FT', class: 'ft-status' };
+                case 'HT': return { text: 'HT', class: 'live-status' };
+                case '1T': return { text: 'LIVE', class: 'live-status' };
+                case '2T': return { text: 'LIVE', class: 'live-status' };
+                default: return { text: eps, class: 'ns-status' };
+            }
+        }
+
+        function formatTime(esd) {
+            // 🚩 التصحيح الأخير: التحقق من وجود القيمة وطولها (14 خانة)
+            if (!esd || typeof esd !== 'string' || esd.length < 14) return 'N/A';
+            
+            // استخراج الوقت فقط (HH:MM) من الخانات 8 إلى 12
+            const hour = esd.substring(8, 10);
+            const minute = esd.substring(10, 12);
+            
+            return `${hour}:${minute}`; 
+        }
+
+        function openModal(title, content) {
+            modalTitle.textContent = title;
+            modalContentPlaceholder.innerHTML = content;
+            appModal.style.display = "block";
+        }
+        
+        // ---------------------------------
+        // MODAL/Interaction Functions
+        // ---------------------------------
+        
+        async function fetchStandings(sid, leagueName) {
+            openModal(`Loading Standings: ${leagueName}`, '<div class="loader"></div>');
+
+            const data = await fetchData(`${PROXY_STANDINGS_URL}?sid=${sid}`, 'Failed to fetch standings.');
+
+            if (!data) {
+                openModal(`Error Fetching Standings`, `<p style="color: red;">Could not fetch standings data. Check Netlify Function (Status: 404/500).</p>`);
+                return;
+            }
+            
+            let html = `<h4>${leagueName} Table</h4>`;
+            
+            if (data.Tables && data.Tables.length > 0 && data.Tables[0].Rows) {
+                html += `<table>
+                    <thead><tr><th>#</th><th>Team</th><th>Pl</th><th>Pts</th></tr></thead><tbody>`;
+                data.Tables[0].Rows.forEach(row => {
+                    html += `<tr>
+                        <td>${row.Rn || ''}</td>
+                        <td style="text-align: left;">${row.Tnm || ''}</td>
+                        <td>${row.P || 0}</td>
+                        <td><strong>${row.Pts || 0}</strong></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            } else {
+                html += `<p style="color: var(--completed-color);">Standings data not available yet.</p>`;
+            }
+
+            openModal(`League Standings: ${leagueName}`, html);
+        }
 
         async function fetchMatchDetails(eid, home, away) {
             openModal(`Loading Details: ${home} vs ${away}`, '<div class="loader"></div>');
@@ -231,35 +296,14 @@
             
             openModal(`Details: ${home} vs ${away}`, html);
         }
-
-        // ---------------------------------
-        // Formatting & Rendering
-        // ---------------------------------
         
-        function getStatusInfo(eps) {
-            switch (eps) {
-                case 'NS': return { text: 'Time', class: 'ns-status' };
-                case 'FT': return { text: 'FT', class: 'ft-status' };
-                case 'HT': return { text: 'HT', class: 'live-status' };
-                case '1T': return { text: 'LIVE', class: 'live-status' };
-                case '2T': return { text: 'LIVE', class: 'live-status' };
-                default: return { text: eps, class: 'ns-status' };
-            }
-        }
+        // ---------------------------------
+        // Rendering Matches
+        // ---------------------------------
 
-        function formatTime(esd) {
-            // 🚩 التصحيح: التحقق من وجود القيمة وطولها لتجنب undefined
-            if (!esd || typeof esd !== 'string' || esd.length < 12) return 'N/A';
-            
-            // استخراج الوقت فقط (HH:MM)
-            const hour = esd.substring(8, 10);
-            const minute = esd.substring(10, 12);
-            
-            return `${hour}:${minute}`; 
-        }
-        
         async function renderMatches() {
-            const data = await fetchData(PROXY_MATCHES_URL, 'Failed to fetch match list.');
+            // الآن fetchData مُعرفة بفضل نقلها للأعلى
+            const data = await fetchData(PROXY_MATCHES_URL, 'Failed to fetch match list.'); 
 
             if (loadingMessage) loadingMessage.remove(); 
             
@@ -271,7 +315,6 @@
             matchesList.innerHTML = ''; 
 
             data.Stages.forEach(stage => {
-                // 🚩 تصحيح مشكلة undefined
                 const leagueName = stage.Snm || 'Unknown League';
                 const countryName = stage.Cnm || 'Unknown Country';
                 
@@ -286,11 +329,10 @@
 
                 if (stage.Events && stage.Events.length > 0) {
                     stage.Events.forEach(event => {
-                        // 🚩 التصحيح: قراءة آمنة للبيانات
                         const homeTeam = event.T1 ? (event.T1[0].Nm || 'Unknown') : 'Unknown';
                         const awayTeam = event.T2 ? (event.T2[0].Nm || 'Unknown') : 'Unknown';
                         
-                        const eventStatus = event.Eps || 'NS'; // استخدام 'NS' كافتراضي
+                        const eventStatus = event.Eps || 'NS'; 
                         const statusInfo = getStatusInfo(eventStatus);
                         
                         const matchTime = formatTime(event.Esd); 
@@ -306,10 +348,9 @@
                         
                         row.dataset.action = 'details';
                         row.dataset.eid = event.Eid;
-                        row.dataset.home = homeTeam; // استخدام القيمة الآمنة
-                        row.dataset.away = awayTeam; // استخدام القيمة الآمنة
+                        row.dataset.home = homeTeam; 
+                        row.dataset.away = awayTeam; 
                         
-                        // 🚩 الهيكل الجديد: Team A | Score A | Status/Time | Score B | Team B
                         row.innerHTML = `
                             <span class="team-name-display">${homeTeam}</span>
                             <span class="score-box">${scoreHome}</span>
@@ -326,7 +367,6 @@
         }
 
         function addInteractionListeners() {
-            // ... (باقي كود Event Listeners)
             document.querySelectorAll('[data-action]').forEach(element => {
                 element.addEventListener('click', (event) => {
                     const action = event.currentTarget.dataset.action;
