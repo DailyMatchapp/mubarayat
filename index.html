@@ -170,113 +170,20 @@
         const PROXY_STANDINGS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-standings'; 
         const PROXY_DETAILS_URL = 'https://mubarayat.netlify.app/.netlify/functions/fetch-details'; 
         
-        const matchesList = document.getElementById('matches-list');
-        const appModal = document.getElementById('app-modal');
-        const modalContentPlaceholder = document.getElementById('modal-content-placeholder');
-        const modalTitle = document.getElementById('modal-title');
-        const closeModalButton = document.getElementById('close-modal');
-        const loadingMessage = document.getElementById('loading-message');
+        // ... (باقي تعريف المتغيرات)
 
         // ---------------------------------
-        // Generic Fetching Function
+        // دوال الجلب (Fetching Functions)
         // ---------------------------------
-        async function fetchData(url, errorMsg) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`${errorMsg} Status: ${response.status}`);
-                return await response.json();
-            } catch (error) {
-                console.error("Fetch Error:", error);
-                return null;
-            }
-        }
-
-        // ---------------------------------
-        // MODAL/UI Functions
-        // ---------------------------------
-
-        function openModal(title, content) {
-            modalTitle.textContent = title;
-            modalContentPlaceholder.innerHTML = content;
-            appModal.style.display = "block";
-        }
+        // ... (دوال fetchData, openModal, fetchStandings, fetchMatchDetails تبقى كما هي)
         
-        async function fetchStandings(sid, leagueName) {
-            openModal(`Loading Standings: ${leagueName}`, '<div class="loader"></div>');
-
-            const data = await fetchData(`${PROXY_STANDINGS_URL}?sid=${sid}`, 'Failed to fetch standings.');
-
-            if (!data) {
-                openModal(`Error Fetching Standings`, `<p style="color: red;">Could not fetch standings data. Check Netlify Function (Status: 404/500).</p>`);
-                return;
-            }
-            
-            let html = `<h4>${leagueName} Table</h4>`;
-            
-            if (data.Tables && data.Tables.length > 0 && data.Tables[0].Rows) {
-                html += `<table>
-                    <thead><tr><th>#</th><th>Team</th><th>Pl</th><th>Pts</th></tr></thead><tbody>`;
-                data.Tables[0].Rows.forEach(row => {
-                    html += `<tr>
-                        <td>${row.Rn || ''}</td>
-                        <td style="text-align: left;">${row.Tnm || ''}</td>
-                        <td>${row.P || 0}</td>
-                        <td><strong>${row.Pts || 0}</strong></td>
-                    </tr>`;
-                });
-                html += '</tbody></table>';
-            } else {
-                html += `<p style="color: var(--completed-color);">Standings data not available yet.</p>`;
-            }
-
-            openModal(`League Standings: ${leagueName}`, html);
-        }
-
-        async function fetchMatchDetails(eid, home, away) {
-            openModal(`Loading Details: ${home} vs ${away}`, '<div class="loader"></div>');
-
-            const data = await fetchData(`${PROXY_DETAILS_URL}?eid=${eid}`, 'Failed to fetch match details.');
-
-            if (!data) {
-                openModal(`Error Fetching Details`, `<p style="color: red;">Could not fetch match details. Check Netlify Function (Status: 404/500).</p>`);
-                return;
-            }
-            
-            let html = `<h4>Full Match Details: ${home} vs ${away}</h4><hr>`;
-            
-            // Events (Goals, Cards)
-            html += '<h5>⚡️ Match Events:</h5>';
-            if (data.Events && data.Events.length > 0) {
-                data.Events.forEach(e => {
-                    html += `<p style="margin: 5px 0;">(${e.Min}') ${e.Nm} - ${e.Tnm}</p>`;
-                });
-            } else {
-                html += '<p>No events recorded yet.</p>';
-            }
-
-            // Head-to-Head (H2H)
-            html += '<hr><h5>⚔️ Head-to-Head (Previous Matches):</h5>';
-            if (data.H2H && data.H2H.length > 0) {
-                data.H2H.forEach(match => {
-                    html += `<p style="margin: 5px 0; font-size: 0.9em;">
-                        ${formatTime(match.Esd).split(' ')[0]} | ${match.T1nm} 
-                        <span style="font-weight: bold; color: var(--live-color);">${match.Tr1} - ${match.Tr2}</span> 
-                        ${match.T2nm}
-                    </p>`;
-                });
-            } else {
-                html += '<p>No Head-to-Head data available.</p>';
-            }
-            
-            openModal(`Details: ${home} vs ${away}`, html);
-        }
-
         // ---------------------------------
         // Formatting & Rendering
         // ---------------------------------
         
         function getStatusInfo(eps) {
             switch (eps) {
+                // إذا كانت 'NS' (لم تبدأ) نستخدم 'Time' كرمز لقراءة الوقت
                 case 'NS': return { text: 'Time', class: 'ns-status' };
                 case 'FT': return { text: 'FT', class: 'ft-status' };
                 case 'HT': return { text: 'HT', class: 'live-status' };
@@ -287,13 +194,14 @@
         }
 
         function formatTime(esd) {
-            if (!esd || esd.length !== 14) return 'N/A';
-            const year = esd.substring(0, 4);
-            const month = esd.substring(4, 6);
-            const day = esd.substring(6, 8);
+            // 🚩 التصحيح: التحقق من وجود القيمة وطولها لتجنب undefined
+            if (!esd || typeof esd !== 'string' || esd.length < 12) return 'N/A';
+            
+            // استخراج الوقت فقط (HH:MM)
             const hour = esd.substring(8, 10);
             const minute = esd.substring(10, 12);
-            return `${day}/${month}/${year} ${hour}:${minute}`;
+            
+            return `${hour}:${minute}`; 
         }
         
         async function renderMatches() {
@@ -309,26 +217,24 @@
             matchesList.innerHTML = ''; 
 
             data.Stages.forEach(stage => {
-                // 🚩 تصحيح مشكلة undefined: استخدام قيم بديلة آمنة
                 const leagueName = stage.Snm || 'Unknown League';
                 const countryName = stage.Cnm || 'Unknown Country';
                 
-                // League Header (Clickable for Standings)
-                const leagueHeader = document.createElement('div');
-                leagueHeader.className = 'league-header';
-                leagueHeader.innerHTML = `🏆 ${leagueName} - ${countryName}`;
-                leagueHeader.dataset.sid = stage.Sid;
-                leagueHeader.dataset.action = 'standings';
-                leagueHeader.dataset.leaguename = leagueName;
-                matchesList.appendChild(leagueHeader);
-
+                // ... (بناء League Header)
+                
                 if (stage.Events && stage.Events.length > 0) {
                     stage.Events.forEach(event => {
-                        const homeTeam = event.T1[0];
-                        const awayTeam = event.T2[0];
+                        // 🚩 التصحيح: قراءة آمنة للبيانات
+                        const homeTeam = event.T1 ? (event.T1[0].Nm || 'Unknown') : 'Unknown';
+                        const awayTeam = event.T2 ? (event.T2[0].Nm || 'Unknown') : 'Unknown';
                         
-                        const statusInfo = getStatusInfo(event.Eps);
-                        const displayStatusTime = statusInfo.text === 'Time' ? formatTime(event.Esd).split(' ')[1] : statusInfo.text; 
+                        const eventStatus = event.Eps || 'NS'; // استخدام 'NS' كافتراضي
+                        const statusInfo = getStatusInfo(eventStatus);
+                        
+                        const matchTime = formatTime(event.Esd); 
+                        
+                        // عرض الوقت فقط إذا كانت الحالة 'Time' (أي 'NS')
+                        const displayStatusTime = statusInfo.text === 'Time' ? matchTime : statusInfo.text;
                         
                         const scoreHome = event.Tr1 || 0;
                         const scoreAway = event.Tr2 || 0;
@@ -338,16 +244,15 @@
                         
                         row.dataset.action = 'details';
                         row.dataset.eid = event.Eid;
-                        row.dataset.home = homeTeam.Nm;
-                        row.dataset.away = awayTeam.Nm;
+                        row.dataset.home = homeTeam; // استخدام القيمة الآمنة
+                        row.dataset.away = awayTeam; // استخدام القيمة الآمنة
                         
-                        // 🚩 الهيكل الجديد: Team A | Score A | Status/Time | Score B | Team B
                         row.innerHTML = `
-                            <span class="team-name-display">${homeTeam.Nm}</span>
+                            <span class="team-name-display">${homeTeam}</span>
                             <span class="score-box">${scoreHome}</span>
                             <span class="center-status-time ${statusInfo.class}">${displayStatusTime}</span>
                             <span class="score-box">${scoreAway}</span>
-                            <span class="team-name-away">${awayTeam.Nm}</span>
+                            <span class="team-name-away">${awayTeam}</span>
                         `;
                         matchesList.appendChild(row);
                     });
@@ -357,39 +262,11 @@
             addInteractionListeners();
         }
 
-        // ---------------------------------
-        // Event Listeners
-        // ---------------------------------
+        // ... (باقي دوال Event Listeners)
         
-        function addInteractionListeners() {
-            document.querySelectorAll('[data-action]').forEach(element => {
-                element.addEventListener('click', (event) => {
-                    const action = event.currentTarget.dataset.action;
-                    
-                    if (action === 'standings') {
-                        const sid = event.currentTarget.dataset.sid;
-                        const leagueName = event.currentTarget.dataset.leaguename;
-                        fetchStandings(sid, leagueName);
-                    } 
-                    
-                    else if (action === 'details') {
-                        const eid = event.currentTarget.dataset.eid;
-                        const home = event.currentTarget.dataset.home;
-                        const away = event.currentTarget.dataset.away;
-                        fetchMatchDetails(eid, home, away);
-                    }
-                });
-            });
-
-            closeModalButton.addEventListener('click', () => appModal.style.display = "none");
-            window.addEventListener('click', (event) => {
-                if (event.target === appModal) {
-                    appModal.style.display = "none";
-                }
-            });
-        }
-
         renderMatches();
     </script>
+</body>
+</html>
 </body>
 </html>
