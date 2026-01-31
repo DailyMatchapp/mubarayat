@@ -1,229 +1,201 @@
-let creds = {};
-let allChannels = [];
-let favorites = JSON.parse(localStorage.getItem('xtream_favorites')) || [];
+let allData = []; // لتخزين القنوات
+let currentChannels = [];
 let hls;
 
-// استخدام بروكسي corsproxy.io (أسرع وأفضل لقوائم IPTV)
-const CORS_PROXY = "https://corsproxy.io/?";
-
-window.onload = () => {
-    const saved = localStorage.getItem('xtream_creds');
-    if(saved) {
-        creds = JSON.parse(saved);
-        showPlayer();
-        loadCategories();
-    }
-};
-
-async function login() {
-    let host = document.getElementById('host').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    if(!host || !username || !password) {
-        alert('يرجى ملء جميع الحقول');
-        return;
-    }
-
-    // تنظيف الرابط
-    if (!host.startsWith('http')) {
-        host = 'http://' + host;
-    }
-    host = host.replace(/\/$/, '');
-
-    creds = { host, username, password };
+// التبديل بين طرق الدخول
+function switchTab(mode) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
     
-    // بناء رابط الـ API
-    const targetUrl = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}`;
-    
-    document.getElementById('error-msg').innerText = 'جاري الاتصال...';
+    if(mode === 'xtream') {
+        document.getElementById('xtream-form').classList.remove('hidden');
+        document.getElementById('file-form').classList.add('hidden');
+    } else {
+        document.getElementById('xtream-form').classList.add('hidden');
+        document.getElementById('file-form').classList.remove('hidden');
+    }
+}
 
+// 1. الاتصال عبر Xtream (باستخدام البروكسي الخلفي)
+async function connectXtream() {
+    const host = document.getElementById('url').value.trim().replace(/\/$/, '');
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    const msg = document.getElementById('status-msg');
+
+    if(!host || !user || !pass) {
+        msg.innerText = "يرجى ملء كافة البيانات"; return;
+    }
+
+    msg.innerText = "جاري الاتصال بالسيرفر...";
+    
+    // استخدام الدالة الخلفية للاتصال
+    // نطلب "get_live_streams" مباشرة لجلب كل شيء (يمكن تعديلها لجلب التصنيفات فقط أولاً)
+    const apiUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
+    
     try {
-        // الطلب عبر البروكسي الجديد
-        const response = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
+        // نمرر الطلب إلى Netlify Function
+        const response = await fetch(`/api/proxy?url=${encodeURIComponent(apiUrl)}`);
         
-        if (!response.ok) throw new Error("سيرفر IPTV لا يستجيب");
-
+        if(!response.ok) throw new Error("فشل الاتصال بالبروكسي");
+        
         const data = await response.json();
         
-        if(data.user_info && data.user_info.auth === 1) {
-            localStorage.setItem('xtream_creds', JSON.stringify(creds));
-            showPlayer();
-            loadCategories();
-        } else {
-            document.getElementById('error-msg').innerText = 'فشل تسجيل الدخول. تأكد من البيانات.';
+        if(!Array.isArray(data)) {
+            // ربما فشل تسجيل الدخول
+            if(data.user_info && data.user_info.auth === 0) throw new Error("بيانات الدخول خاطئة");
+            throw new Error("تنسيق البيانات غير مدعوم");
         }
+
+        processChannels(data, host, user, pass); // معالجة البيانات
+        
     } catch (e) {
         console.error(e);
-        document.getElementById('error-msg').innerHTML = `
-            خطأ في الاتصال!<br>
-            1. تأكد أن الرابط يعمل.<br>
-            2. <b>هام:</b> اسمح للمحتوى غير الآمن (Insecure Content) من إعدادات المتصفح.
-        `;
+        msg.innerText = "خطأ: " + e.message;
     }
 }
 
-function showPlayer() {
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('player-section').classList.remove('hidden');
+// 2. قراءة ملف M3U محلي
+function loadFile() {
+    const fileInput = document.getElementById('m3u-file');
+    const file = fileInput.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        parseM3U(content);
+    };
+    reader.readAsText(file);
 }
 
-function logout() {
-    localStorage.removeItem('xtream_creds');
-    location.reload();
-}
+// تحليل ملف M3U
+function parseM3U(content) {
+    const lines = content.split('\n');
+    const channels = [];
+    let currentChannel = {};
 
-async function loadCategories() {
-    try {
-        const targetUrl = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}&action=get_live_categories`;
-        const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
-        const categories = await res.json();
-        
-        const list = document.getElementById('categories-list');
-        list.innerHTML = `<li onclick="loadChannels('all')">كل القنوات</li>`;
-        
-        categories.forEach(cat => {
-            const li = document.createElement('li');
-            li.innerText = cat.category_name;
-            li.onclick = () => loadChannels(cat.category_id);
-            list.appendChild(li);
-        });
-        
-        loadChannels('all'); 
-    } catch (e) {
-        console.error('Error loading categories:', e);
-    }
-}
-
-async function loadChannels(catId) {
-    const container = document.getElementById('channels-container');
-    container.innerHTML = '<p style="text-align:center; color:white;">جاري جلب القنوات...</p>';
-    
-    try {
-        const targetUrl = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}&action=get_live_streams&category_id=${catId === 'all' ? '' : catId}`;
-        const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
-        allChannels = await res.json(); // هذا البروكسي يرجع البيانات مباشرة
-        
-        if (!Array.isArray(allChannels)) {
-            // أحياناً يكون الرد عبارة عن object فارغ إذا لم توجد قنوات
-            allChannels = [];
+    lines.forEach(line => {
+        line = line.trim();
+        if(line.startsWith('#EXTINF:')) {
+            const info = line.split(',');
+            currentChannel.name = info[1] || 'Unknown';
+            // استخراج الشعار إن وجد
+            const iconMatch = line.match(/tvg-logo="([^"]*)"/);
+            currentChannel.stream_icon = iconMatch ? iconMatch[1] : '';
+            // استخراج المجموعة
+            const groupMatch = line.match(/group-title="([^"]*)"/);
+            currentChannel.category_id = groupMatch ? groupMatch[1] : 'عام';
+        } else if(line.startsWith('http')) {
+            currentChannel.direct_source = line;
+            channels.push(currentChannel);
+            currentChannel = {};
         }
-
-        renderChannels(allChannels);
-    } catch (e) {
-        console.error('Error loading channels:', e);
-        container.innerHTML = '<p style="text-align:center; color:red;">فشل تحميل القائمة. حاول اختيار تصنيف آخر.</p>';
-    }
+    });
+    
+    processChannels(channels, null, null, null, true);
 }
 
-function renderChannels(channels) {
-    const container = document.getElementById('channels-container');
-    container.innerHTML = '';
+// معالجة القنوات وعرضها
+function processChannels(data, host, user, pass, isFile = false) {
+    // هيكلة البيانات لتناسب العرض
+    allData = data.map(ch => ({
+        id: ch.stream_id || Math.random(),
+        name: ch.name || ch.title,
+        icon: ch.stream_icon || '',
+        category: ch.category_id || 'Uncategorized',
+        // إذا كان ملف M3U نستخدم الرابط المباشر، وإلا نبني رابط Xtream
+        url: isFile ? ch.direct_source : `${host}/live/${user}/${pass}/${ch.stream_id}.m3u8`
+    }));
 
-    // عرض أول 200 قناة فقط لتحسين الأداء
-    const limit = 200;
-    const displayList = channels.slice(0, limit);
+    // استخراج التصنيفات
+    const categories = [...new Set(allData.map(item => item.category))];
+    renderCategories(categories);
+    
+    // إخفاء تسجيل الدخول وإظهار المشغل
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('player-ui').style.display = 'flex';
+    
+    // عرض الكل افتراضياً
+    filterByCategory('all');
+}
 
-    if (displayList.length === 0) {
-        container.innerHTML = '<p style="text-align:center">لا توجد قنوات في هذا القسم</p>';
-        return;
-    }
-
-    displayList.forEach(ch => {
-        const isFav = favorites.includes(ch.stream_id);
-        const card = document.createElement('div');
-        card.className = 'channel-card';
-        // التعامل مع الصور المكسورة
-        const icon = ch.stream_icon && ch.stream_icon.startsWith('http') ? ch.stream_icon : 'https://via.placeholder.com/50?text=TV';
-        
-        card.innerHTML = `
-            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, ${ch.stream_id})">
-                <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
-            </button>
-            <img src="${icon}" class="channel-icon" onerror="this.src='https://via.placeholder.com/50?text=Error'">
-            <div class="channel-info">
-                <strong>${ch.name}</strong>
-            </div>
-        `;
-        card.onclick = (e) => {
-            if(!e.target.closest('.fav-btn')) playChannel(ch);
-        };
-        container.appendChild(card);
+function renderCategories(cats) {
+    const list = document.getElementById('categories');
+    list.innerHTML = `<li onclick="filterByCategory('all')" class="active">الكل</li>`;
+    cats.forEach(cat => {
+        // إذا كان التصنيف مجرد رقم (Xtream) يمكن تحسينه بطلب قائمة التصنيفات، هنا سنعرضه كما هو للتبسيط
+        list.innerHTML += `<li onclick="filterByCategory('${cat}')">${cat}</li>`;
     });
 }
 
-function playChannel(ch) {
-    // بناء رابط البث
-    // هام: البث المباشر لا يمر عبر البروكسي لأنه دفق مستمر
-    const streamUrl = `${creds.host}/live/${creds.username}/${creds.password}/${ch.stream_id}.m3u8`;
+function filterByCategory(cat) {
+    document.querySelectorAll('.categories-list li').forEach(li => li.classList.remove('active'));
+    event && event.target.classList.add('active');
     
-    const video = document.getElementById('video');
-    document.getElementById('current-channel-name').innerText = ch.name;
+    document.getElementById('category-title').innerText = cat === 'all' ? 'كل القنوات' : cat;
 
+    if(cat === 'all') {
+        currentChannels = allData;
+    } else {
+        currentChannels = allData.filter(ch => ch.category == cat);
+    }
+    renderChannels(currentChannels);
+}
+
+function renderChannels(channels) {
+    const grid = document.getElementById('channels');
+    grid.innerHTML = '';
+    
+    // عرض أول 100 لعدم تهنيج المتصفح
+    channels.slice(0, 100).forEach(ch => {
+        const div = document.createElement('div');
+        div.className = 'channel-card';
+        div.innerHTML = `
+            <img src="${ch.icon}" class="channel-icon" onerror="this.style.display='none'">
+            <div>${ch.name}</div>
+        `;
+        div.onclick = () => playStream(ch.url);
+        grid.appendChild(div);
+    });
+}
+
+function playStream(url) {
+    const video = document.getElementById('main-player');
+    
     if (Hls.isSupported()) {
         if(hls) hls.destroy();
         hls = new Hls();
-        hls.loadSource(streamUrl);
+        hls.loadSource(url);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play().catch(e => console.log("Autoplay prevented"));
+            video.play();
         });
-        hls.on(Hls.Events.ERROR, function (event, data) {
-            if (data.fatal) {
-                switch (data.type) {
-                case Hls.ErrorTypes.NETWORK_ERROR:
-                    console.error("خطأ شبكة: تأكد من إعدادات Mixed Content");
-                    alert("لا يمكن تشغيل القناة.\nالمتصفح حظر الاتصال لأن الرابط HTTP والموقع HTTPS.\nانقر على القفل بجوار الرابط واسمح بـ Insecure Content.");
-                    break;
-                case Hls.ErrorTypes.MEDIA_ERROR:
-                    hls.recoverMediaError();
-                    break;
-                default:
-                    hls.destroy();
-                    break;
-                }
+        hls.on(Hls.Events.ERROR, function(event, data) {
+            if(data.fatal) {
+                console.log("Error loading stream, might be mixed content or dead link");
             }
         });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = streamUrl;
+        video.src = url;
         video.play();
     }
 }
 
-// ... بقية دوال البحث والمفضلة (كما هي) ...
-function setView(type) {
-    const container = document.getElementById('channels-container');
-    if(type === 'list') {
-        container.classList.remove('grid-view');
-        container.classList.add('list-view');
-    } else {
-        container.classList.remove('list-view');
-        container.classList.add('grid-view');
-    }
-}
-
-function searchChannels() {
-    const query = document.getElementById('search-input').value.toLowerCase();
-    const filtered = allChannels.filter(ch => ch.name.toLowerCase().includes(query));
+// بحث
+function filterChannels() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const filtered = currentChannels.filter(ch => ch.name.toLowerCase().includes(q));
     renderChannels(filtered);
 }
 
-function toggleFav(e, id) {
-    e.stopPropagation();
-    if(favorites.includes(id)) {
-        favorites = favorites.filter(fid => fid !== id);
-    } else {
-        favorites.push(id);
-    }
-    localStorage.setItem('xtream_favorites', JSON.stringify(favorites));
-    const btn = e.currentTarget;
-    const icon = btn.querySelector('i');
-    btn.classList.toggle('active');
-    icon.classList.toggle('fas');
-    icon.classList.toggle('far');
+// تغيير العرض
+function toggleView(mode) {
+    const grid = document.getElementById('channels');
+    if(mode === 'list') grid.classList.add('list-mode');
+    else grid.classList.remove('list-mode');
 }
 
-function showFavoritesOnly() {
-    const favChannels = allChannels.filter(ch => favorites.includes(ch.stream_id));
-    renderChannels(favChannels);
+function logout() {
+    location.reload();
 }
