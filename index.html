@@ -3,59 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xtream Web Player</title>
-    <!-- استدعاء مكتبة HLS لتشغيل القنوات -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <!-- أيقونات -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>AI Stream Player</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
 
-    <!-- شاشة تسجيل الدخول -->
-    <div id="login-section" class="container">
-        <div class="login-box">
-            <h2>تسجيل الدخول Xtream</h2>
-            <input type="text" id="host" placeholder="الرابط (http://example.com:8080)">
-            <input type="text" id="username" placeholder="اسم المستخدم">
-            <input type="text" id="password" placeholder="كلمة المرور">
-            <button onclick="login()">دخول</button>
-            <p id="error-msg"></p>
+    <!-- Login Section -->
+    <div id="login-screen">
+        <div class="glass-panel login-box">
+            <h1><i class="fas fa-play-circle"></i> AI Player</h1>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('xtream')">Xtream API</button>
+                <button class="tab-btn" onclick="switchTab('file')">ملف M3U</button>
+            </div>
+
+            <!-- Xtream Form -->
+            <div id="xtream-form">
+                <input type="text" id="url" placeholder="الرابط (Host URL)">
+                <input type="text" id="username" placeholder="اسم المستخدم">
+                <input type="text" id="password" placeholder="كلمة المرور">
+                <button class="glow-btn" onclick="connectXtream()">اتصال آمن</button>
+            </div>
+
+            <!-- File Form -->
+            <div id="file-form" class="hidden">
+                <input type="file" id="m3u-file" accept=".m3u,.m3u8">
+                <button class="glow-btn" onclick="loadFile()">رفع وتشغيل</button>
+            </div>
+            
+            <p id="status-msg" style="color: #ff4d4d; margin-top: 10px; font-size: 0.9em;"></p>
         </div>
     </div>
 
-    <!-- واجهة المشغل الرئيسية -->
-    <div id="player-section" class="hidden">
-        <!-- القائمة الجانبية -->
-        <div class="sidebar">
-            <h3>التصنيفات</h3>
-            <ul id="categories-list">
-                <!-- سيتم تعبئة التصنيفات هنا -->
+    <!-- Player UI -->
+    <div id="player-ui">
+        <!-- Sidebar -->
+        <div class="glass-panel sidebar">
+            <div class="search-bar">
+                <input type="text" id="search" placeholder="بحث..." onkeyup="filterChannels()">
+            </div>
+            <h3 style="margin-top:0">الأقسام</h3>
+            <ul class="categories-list" id="categories">
+                <!-- JS populates this -->
             </ul>
+            <button class="glow-btn" onclick="logout()" style="margin-top:auto; background: #e73c7e;">خروج</button>
         </div>
 
-        <!-- المحتوى الرئيسي -->
-        <div class="main-content">
-            <!-- شريط التحكم العلوي -->
-            <div class="top-bar">
-                <input type="text" id="search-input" placeholder="بحث عن قناة..." onkeyup="searchChannels()">
-                <div class="view-controls">
-                    <button onclick="showFavoritesOnly()" title="المفضلة"><i class="fas fa-star"></i></button>
-                    <button onclick="setView('grid')" title="عرض شبكة"><i class="fas fa-th"></i></button>
-                    <button onclick="setView('list')" title="عرض قائمة"><i class="fas fa-list"></i></button>
-                    <button onclick="logout()" title="خروج"><i class="fas fa-sign-out-alt"></i></button>
+        <!-- Main Content -->
+        <div class="content-area">
+            <!-- Video Player -->
+            <div class="video-wrapper">
+                <video id="main-player" controls autoplay></video>
+                <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:5px 10px; border-radius:5px;">
+                    <i class="fas fa-circle" style="color:red; font-size:10px;"></i> مباشر
                 </div>
             </div>
 
-            <!-- مشغل الفيديو -->
-            <div class="video-container">
-                <video id="video" controls></video>
-                <div id="current-channel-name">اختر قناة للمشاهدة</div>
+            <!-- Controls & List -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px;">
+                <h3 id="category-title">القنوات</h3>
+                <div>
+                    <button class="tab-btn" onclick="toggleView('grid')"><i class="fas fa-th"></i></button>
+                    <button class="tab-btn" onclick="toggleView('list')"><i class="fas fa-list"></i></button>
+                </div>
             </div>
 
-            <!-- قائمة القنوات -->
-            <div id="channels-container" class="grid-view">
-                <!-- سيتم تعبئة القنوات هنا -->
+            <div class="glass-panel channels-grid" id="channels">
+                <!-- JS populates this -->
             </div>
         </div>
     </div>
