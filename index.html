@@ -2,229 +2,351 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer"> <!-- مهم جداً لتجاوز حظر السيرفرات -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Xtream Player Pro - ArtPlayer Ultimate V8</title>
+    <title>Xtream Player Pro - Unlocked V10</title>
     
-    <!-- مكتبات التشغيل الثلاثة (السر لتشغيل كل شيء) -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.min.js"></script>
+    <!-- مكتبات التشغيل الأقوى عالمياً -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.0/dist/hls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
     
-    <!-- الخطوط والأيقونات -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- التصميم العام (Dark Glass Theme) --- */
+        /* --- تصميم "الوضع الليلي الحقيقي" --- */
         :root {
-            --bg-gradient: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
-            --primary: #00ff88; /* أخضر نيون */
-            --secondary: #16213e;
-            --text: #ffffff;
-            --glass: rgba(255, 255, 255, 0.05);
-            --border: 1px solid rgba(255, 255, 255, 0.1);
+            --bg: #000000;
+            --panel: #0f0f0f;
+            --border: 1px solid #222;
+            --accent: #e50914; /* أحمر قوي */
+            --text: #fff;
+            --active: rgba(255, 255, 255, 0.1);
         }
 
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: 'Tajawal', sans-serif; background: var(--bg-gradient); color: var(--text); height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        * { box-sizing: border-box; outline: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; }
+
+        /* القائمة الجانبية */
+        .sidebar {
+            width: 320px; background: var(--panel); border-left: var(--border); display: flex; flex-direction: column;
+            transition: transform 0.3s; z-index: 100; box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        }
+        
+        .header {
+            padding: 15px; background: #050505; border-bottom: var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-weight: bold; font-size: 16px; color: var(--accent); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        
+        /* أدوات التحكم */
+        .controls-area { padding: 10px; background: #080808; border-bottom: var(--border); }
+        .input-group { position: relative; width: 100%; margin-bottom: 8px; }
+        .main-input {
+            width: 100%; background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 10px 30px 10px 10px;
+            border-radius: 4px; font-family: 'Tajawal'; font-size: 12px;
+        }
+        .main-input:focus { border-color: var(--accent); }
+        .load-btn {
+            width: 100%; background: var(--accent); color: white; border: none; padding: 8px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s;
+        }
+        .load-btn:hover { background: #b0060e; }
+        
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 8px; }
+        .tab-btn { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #888; padding: 6px; font-size: 10px; cursor: pointer; border-radius: 4px; }
+        .tab-btn.active { background: #333; color: #fff; border-color: #555; }
+
+        /* قائمة القنوات */
+        .channel-list { flex: 1; overflow-y: auto; padding: 5px; }
+        .channel-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #1a1a1a;
+            cursor: pointer; transition: 0.2s; border-radius: 4px;
+        }
+        .channel-item:hover { background: var(--active); }
+        .channel-item.active { background: #1a1a1a; border-right: 3px solid var(--accent); }
+        .ch-num { font-size: 10px; color: #555; min-width: 20px; }
+        .ch-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .ch-logo { width: 30px; height: 30px; background: #000; border-radius: 4px; object-fit: contain; }
+
+        /* منطقة الفيديو */
+        .player-container { flex: 1; background: #000; position: relative; display: flex; align-items: center; justify-content: center; }
+        .artplayer-app { width: 100%; height: 100%; }
+        
+        /* شاشة الترحيب */
+        .empty-state {
+            position: absolute; text-align: center; color: #333; pointer-events: none;
+        }
+        .empty-state i { font-size: 80px; margin-bottom: 20px; opacity: 0.5; }
+
+        /* رسائل النظام */
+        .status-bar {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 30, 30, 0.9); padding: 8px 20px; border-radius: 30px;
+            font-size: 12px; display: none; z-index: 99; border: 1px solid #444;
+        }
+        .spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* التجاوب */
+        @media (max-width: 768px) {
+            body { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 50%; }
+            .player-container { height: 50%; }
+        }
 
         /* سكرول بار */
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-        /* الشاشة الرئيسية */
-        .landing-container { display: flex; width: 95vw; max-width: 1200px; height: 90vh; background: rgba(0,0,0,0.8); border: var(--border); backdrop-filter: blur(10px); border-radius: 20px; overflow: hidden; box-shadow: 0 0 50px rgba(0, 255, 136, 0.1); }
-        
-        .left-panel { width: 320px; background: rgba(0,0,0,0.6); border-left: var(--border); display: flex; flex-direction: column; padding: 20px; }
-        .panel-title { font-size: 14px; margin-bottom: 20px; color: #fff; font-weight: bold; border-bottom: 2px solid var(--primary); padding-bottom: 10px; display: inline-block; }
-        
-        .accounts-grid { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .user-card { background: var(--glass); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; position: relative; border: 1px solid transparent; }
-        .user-card:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
-        .user-avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 18px; }
-        .user-details h3 { margin: 0; font-size: 14px; color: #fff; }
-        .user-details p { margin: 3px 0 0; font-size: 11px; color: #aaa; }
-        .delete-user { position: absolute; left: 10px; color: #ff4757; opacity: 0; transition: 0.2s; }
-        .user-card:hover .delete-user { opacity: 1; }
-
-        .add-user-btn { margin-top: 20px; padding: 12px; background: transparent; border: 1px dashed #555; color: #aaa; text-align: center; cursor: pointer; transition: 0.2s; border-radius: 8px; font-size: 13px; }
-        .add-user-btn:hover { border-color: var(--primary); color: var(--primary); }
-
-        .right-panel { flex: 1; padding: 40px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
-        .welcome-msg { text-align: center; }
-        .welcome-msg i { font-size: 70px; color: var(--primary); margin-bottom: 20px; filter: drop-shadow(0 0 10px var(--primary)); }
-        
-        .auth-forms { width: 100%; max-width: 400px; display: none; animation: fadeIn 0.5s; }
-        .auth-forms.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 10px; }
-        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 12px; color: #aaa; border-radius: 8px; transition: 0.3s; }
-        .tab.active { background: var(--primary); color: #000; font-weight: bold; }
-
-        .main-inp { width: 100%; padding: 14px; background: rgba(0,0,0,0.5); border: var(--border); color: #fff; margin-bottom: 12px; border-radius: 8px; font-family: inherit; font-size: 13px; transition: 0.3s; }
-        .main-inp:focus { border-color: var(--primary); }
-        .action-btn { width: 100%; padding: 14px; background: var(--primary); border: none; color: #000; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px; transition: 0.3s; }
-        .action-btn:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--primary); }
-
-        /* --- واجهة المشغل --- */
-        .player-layout { display: none; width: 100vw; height: 100vh; background: #000; flex-direction: row; }
-        
-        .ch-sidebar { width: 320px; background: #0f0f1a; border-left: var(--border); display: flex; flex-direction: column; z-index: 20; }
-        .sidebar-head { padding: 15px; background: #000; border-bottom: var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .srch-inp { width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: var(--border); color: white; margin: 10px; width: calc(100% - 20px); border-radius: 6px; text-align: center; }
-        
-        .ch-list { flex: 1; overflow-y: auto; }
-        .ch-row { display: flex; align-items: center; gap: 10px; padding: 12px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); transition: 0.2s; }
-        .ch-row:hover { background: rgba(255,255,255,0.05); }
-        .ch-row.active { background: rgba(0,255,136,0.1); border-right: 3px solid var(--primary); }
-        .ch-row span { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ddd; }
-        .ch-row img { width: 30px; height: 30px; object-fit: contain; }
-
-        /* ArtPlayer Container */
-        .video-container { flex: 1; background: #000; position: relative; width: 100%; height: 100%; }
-        .artplayer-app { width: 100%; height: 100%; }
-
-        /* تنبيهات */
-        .http-warning {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 71, 87, 0.9); color: white; padding: 10px; border-radius: 5px;
-            font-size: 12px; display: none; z-index: 100; text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            .landing-container { flex-direction: column-reverse; width: 100%; height: 100%; border-radius: 0; border: none; }
-            .left-panel { width: 100%; height: 45%; }
-            .right-panel { height: 55%; padding: 20px; }
-            .player-layout { flex-direction: column-reverse; }
-            .ch-sidebar { width: 100%; height: 50%; }
-            .video-container { width: 100%; height: 50%; }
-        }
-        
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 10px 25px; border-radius: 50px; font-size: 13px; font-weight: bold; display: none; z-index: 10000; }
+        ::-webkit-scrollbar-thumb { background: #333; }
     </style>
 </head>
 <body>
 
-    <div id="toast" class="toast"></div>
-
-    <!-- 1. الشاشة الرئيسية -->
-    <div class="landing-container" id="landingScreen">
-        <div class="left-panel">
-            <div class="panel-title">قوائم التشغيل</div>
-            <div class="accounts-grid" id="accountsGrid"></div>
-            <div class="add-user-btn" onclick="showAddForm()">+ إضافة حساب جديد</div>
+    <!-- القائمة الجانبية -->
+    <div class="sidebar">
+        <div class="header">
+            <div class="logo"><i class="fas fa-infinity"></i> XTREAM V10</div>
+            <div style="font-size:10px; color:#555;" id="count">0 Channels</div>
         </div>
 
-        <div class="right-panel">
-            <div id="welcomeScreen" class="welcome-msg">
-                <i class="fas fa-meteor"></i>
-                <h2>Xtream ArtPlayer V8</h2>
-                <p style="color:#aaa; margin-top:10px;">المشغل الوحيد الذي يدعم MPEGTS & HLS</p>
-                <div style="margin-top:20px; font-size:11px; color:#ff4757; background:rgba(255,0,0,0.1); padding:10px; border-radius:5px;">
-                    ⚠️ تنبيه: الروابط http:// لن تعمل إذا كان الموقع https://<br>
-                    يرجى تحميل هذا الملف وتشغيله محلياً.
-                </div>
+        <div class="controls-area">
+            <!-- التبويبات -->
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="setMode('url')">رابط M3U</button>
+                <button class="tab-btn" onclick="setMode('xtream')">Xtream</button>
+                <button class="tab-btn" onclick="setMode('file')">ملف</button>
             </div>
 
-            <div id="addForms" class="auth-forms">
-                <div class="tabs">
-                    <div class="tab active" onclick="setTab('xtream')">Xtream</div>
-                    <div class="tab" onclick="setTab('direct')">رابط مباشر</div>
-                    <div class="tab" onclick="setTab('m3u')">ملف M3U</div>
-                </div>
+            <!-- نموذج الرابط (الافتراضي) -->
+            <div id="form-url">
+                <input type="text" id="m3u-url" class="main-input" placeholder="ألصق رابط القائمة الطويل هنا...">
+                <button class="load-btn" onclick="loadUrl()">جلب القنوات</button>
+            </div>
 
-                <!-- Xtream -->
-                <div id="xtreamInput">
-                    <input type="text" id="xHost" class="main-inp" placeholder="Host (http://domain.com:8080)">
-                    <input type="text" id="xUser" class="main-inp" placeholder="Username">
-                    <input type="password" id="xPass" class="main-inp" placeholder="Password">
-                    <button class="action-btn" onclick="connectXtream()">اتصال</button>
+            <!-- نموذج Xtream -->
+            <div id="form-xtream" style="display:none;">
+                <input type="text" id="x-host" class="main-input" style="margin-bottom:5px;" placeholder="Host">
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <input type="text" id="x-user" class="main-input" placeholder="User">
+                    <input type="text" id="x-pass" class="main-input" placeholder="Pass">
                 </div>
+                <button class="load-btn" onclick="loadXtream()">اتصال</button>
+            </div>
 
-                <!-- Direct Link -->
-                <div id="directInput" style="display: none;">
-                    <input type="text" id="dLink" class="main-inp" placeholder="ألصق رابط القناة (يدعم الروابط الخام)">
-                    <p style="font-size:10px; color:#aaa; text-align:center;">* سيحاول المشغل إصلاح الرابط تلقائياً</p>
-                    <button class="action-btn" onclick="playDirect()">تشغيل</button>
-                </div>
+            <!-- نموذج الملف -->
+            <div id="form-file" style="display:none;">
+                <button class="load-btn" style="background:#333;" onclick="document.getElementById('local-file').click()">
+                    <i class="fas fa-folder"></i> اختر ملف M3U
+                </button>
+                <input type="file" id="local-file" accept=".m3u,.m3u8" style="display:none;" onchange="loadFile()">
+            </div>
 
-                <!-- M3U -->
-                <div id="m3uInput" style="display: none;">
-                    <div style="border: 2px dashed #444; padding: 30px; text-align: center; border-radius: 10px; cursor: pointer;" onclick="document.getElementById('m3uFile').click()">
-                        <i class="fas fa-file-alt" style="font-size: 30px; color: var(--primary); margin-bottom: 10px;"></i>
-                        <p style="margin:0; font-size:12px; color:#888;" id="fileName">اختر ملف M3U</p>
-                        <input type="file" id="m3uFile" accept=".m3u,.m3u8" style="display: none;" onchange="startM3U()">
-                    </div>
-                </div>
+            <!-- البحث -->
+            <input type="text" id="search" class="main-input" style="margin-top:10px;" placeholder="بحث سريع..." onkeyup="doSearch()">
+        </div>
 
-                <div style="text-align: center; margin-top: 20px; cursor: pointer; color: #666; font-size: 12px;" onclick="hideAddForm()">إلغاء</div>
+        <div class="channel-list" id="list">
+            <div style="text-align:center; padding:20px; color:#444; font-size:12px;">
+                القائمة فارغة.<br>قم بلصق رابط واضغط جلب.
             </div>
         </div>
     </div>
 
-    <!-- 2. المشغل -->
-    <div class="player-layout" id="playerScreen">
-        <div class="ch-sidebar">
-            <div class="sidebar-head">
-                <div style="color:var(--primary); font-weight:bold; font-size:14px; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-user-astronaut"></i> <span id="currentUser">User</span>
-                </div>
-                <i class="fas fa-sign-out-alt" style="color:#666; cursor:pointer;" onclick="location.reload()" title="Logout"></i>
-            </div>
-            <input type="text" id="searchInp" class="srch-inp" placeholder="بحث في القنوات..." onkeyup="filterChannels()">
-            <div class="ch-list" id="chList"></div>
+    <!-- المشغل -->
+    <div class="player-container">
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-play-circle"></i>
+            <h3>Ready to Play</h3>
         </div>
-
-        <div class="video-container">
-            <div id="artplayer" class="artplayer-app"></div>
-            <div id="httpWarning" class="http-warning">
-                أنت تحاول تشغيل رابط HTTP غير آمن في موقع HTTPS.<br>
-                لن يعمل الفيديو إلا إذا فتحت هذا الملف من جهازك مباشرة.
-            </div>
-        </div>
+        <div id="artplayer" class="artplayer-app"></div>
+        <div id="status" class="status-bar"></div>
     </div>
 
     <script>
-        let art;
-        let accounts = JSON.parse(localStorage.getItem('xtream_users_art') || '[]');
+        // --- تهيئة المتغيرات ---
+        let art = null;
         let allChannels = [];
-        let currentAuth = {}; 
+        let currentMode = 'url';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAccounts();
-        });
+        // استعادة آخر رابط تم استخدامه
+        window.onload = () => {
+            const savedUrl = localStorage.getItem('last_m3u_url');
+            if(savedUrl) document.getElementById('m3u-url').value = savedUrl;
+        };
 
-        // --- تهيئة ArtPlayer (الجوهرة) ---
-        function initArtPlayer(url) {
+        // --- وظائف الواجهة ---
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('form-url').style.display = 'none';
+            document.getElementById('form-xtream').style.display = 'none';
+            document.getElementById('form-file').style.display = 'none';
+            
+            document.getElementById('form-' + mode).style.display = 'block';
+        }
+
+        function showStatus(msg, loading = false) {
+            const el = document.getElementById('status');
+            el.innerHTML = msg + (loading ? ' <span class="spinner"></span>' : '');
+            el.style.display = 'block';
+            if (!loading) setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        // --- 1. تحميل رابط M3U (الأهم) ---
+        async function loadUrl() {
+            const url = document.getElementById('m3u-url').value.trim();
+            if (!url) return showStatus('الرجاء إدخال الرابط');
+
+            showStatus('جاري تحميل القائمة...', true);
+            
+            // استخدام وكيل (Proxy) لتخطي مشاكل CORS عند جلب النص فقط
+            // ملاحظة: الفيديو نفسه سيعمل مباشرة لأننا نستخدم No-Referrer
+            const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            
+            try {
+                const response = await fetch(proxy);
+                if (!response.ok) throw new Error('فشل التحميل');
+                const text = await response.text();
+                
+                parseAndRender(text);
+                localStorage.setItem('last_m3u_url', url);
+                showStatus(`تم تحميل ${allChannels.length} قناة`);
+
+            } catch (err) {
+                console.error(err);
+                showStatus('فشل جلب القائمة. تأكد من صحة الرابط');
+            }
+        }
+
+        // --- 2. تحميل Xtream ---
+        async function loadXtream() {
+            let host = document.getElementById('x-host').value.trim();
+            const user = document.getElementById('x-user').value.trim();
+            const pass = document.getElementById('x-pass').value.trim();
+            
+            if(!host || !user || !pass) return showStatus('بيانات ناقصة');
+            if(!host.startsWith('http')) host = 'http://' + host;
+
+            showStatus('جاري الاتصال...', true);
+            const api = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
+            const proxy = `https://corsproxy.io/?${encodeURIComponent(api)}`;
+
+            try {
+                const res = await fetch(proxy);
+                const data = await res.json();
+                
+                // تحويل بيانات Xtream إلى صيغة M3U للتوافق
+                allChannels = data.map(ch => ({
+                    name: ch.name,
+                    logo: ch.stream_icon,
+                    // سر المهنة: إضافة m3u8 للرابط ليجبره على العمل
+                    url: `${host}/live/${user}/${pass}/${ch.stream_id}.m3u8`
+                }));
+
+                renderList(allChannels);
+                showStatus(`تم جلب ${allChannels.length} قناة`);
+
+            } catch (e) {
+                showStatus('فشل الاتصال بـ Xtream');
+            }
+        }
+
+        // --- 3. تحميل ملف ---
+        function loadFile() {
+            const file = document.getElementById('local-file').files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => parseAndRender(e.target.result);
+            reader.readAsText(file);
+        }
+
+        // --- تحليل البيانات (Parsing Logic) ---
+        function parseAndRender(data) {
+            const lines = data.split('\n');
+            allChannels = [];
+            let currentCh = { name: 'قناة غير معروفة', logo: '', url: '' };
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+
+                if (line.startsWith('#EXTINF:')) {
+                    const info = line.split(',');
+                    currentCh.name = info[info.length - 1];
+                    const logoMatch = line.match(/tvg-logo="([^"]*)"/);
+                    if (logoMatch) currentCh.logo = logoMatch[1];
+                } else if (line.startsWith('http')) {
+                    currentCh.url = line;
+                    allChannels.push({ ...currentCh });
+                    currentCh = { name: 'قناة غير معروفة', logo: '', url: '' };
+                }
+            }
+            renderList(allChannels);
+        }
+
+        function renderList(channels) {
+            const container = document.getElementById('list');
+            document.getElementById('count').innerText = `${channels.length} Channels`;
+            container.innerHTML = '';
+
+            // عرض أول 500 قناة فقط للأداء
+            const limit = channels.slice(0, 500);
+
+            limit.forEach(ch => {
+                const div = document.createElement('div');
+                div.className = 'channel-item';
+                div.innerHTML = `
+                    <span class="ch-num"><i class="fas fa-tv"></i></span>
+                    <span class="ch-name">${ch.name}</span>
+                `;
+                div.onclick = () => playChannel(ch.url, div);
+                container.appendChild(div);
+            });
+        }
+
+        // --- وظيفة البحث السريع ---
+        function doSearch() {
+            const term = document.getElementById('search').value.toLowerCase();
+            const filtered = allChannels.filter(c => c.name.toLowerCase().includes(term));
+            renderList(filtered);
+        }
+
+        // --- المشغل (ArtPlayer + Engines) ---
+        function playChannel(url, el) {
+            // تحديث الواجهة
+            document.querySelectorAll('.channel-item').forEach(i => i.classList.remove('active'));
+            if(el) el.classList.add('active');
+            document.getElementById('emptyState').style.display = 'none';
+
+            // تنظيف المشغل القديم
             if (art) art.destroy();
 
-            // فحص نوع الرابط
+            // تحديد المحرك المناسب
             let type = 'm3u8';
-            if (url.endsWith('.ts') || url.match(/\/\d+$/)) { // إذا كان ينتهي برقم أو ts
-                type = 'mpegts'; // استخدم محرك mpegts
+            // إذا الرابط ينتهي بـ .ts أو يحتوي على mpegts أو هو رابط xtream خام (رقم فقط)
+            if (url.includes('mpegts') || url.endsWith('.ts') || url.match(/\/\d+$/)) {
+                type = 'mpegts'; 
             }
 
-            console.log("Playing URL:", url, "Type:", type);
-
-            // التحقق من مشكلة Mixed Content
-            if(location.protocol === 'https:' && url.startsWith('http:')) {
-                document.getElementById('httpWarning').style.display = 'block';
-            } else {
-                document.getElementById('httpWarning').style.display = 'none';
-            }
+            console.log(`Playing: ${url} [Type: ${type}]`);
 
             art = new Artplayer({
                 container: '#artplayer',
                 url: url,
-                type: type, // تحديد النوع (تلقائي أو mpegts)
-                autoplay: true,
+                type: type,
+                volume: 0.8,
                 isLive: true,
-                fullscreen: true,
+                autoplay: true,
                 pip: true,
+                fullscreen: true,
+                autoSize: true,
                 setting: true,
+                // إعدادات مخصصة للمحركات
                 customType: {
                     m3u8: function (video, url) {
                         if (Hls.isSupported()) {
@@ -241,189 +363,26 @@
                                 type: 'mpegts',
                                 url: url,
                                 isLive: true,
+                                cors: true 
                             });
                             player.attachMediaElement(video);
                             player.load();
                             player.play();
                         } else {
-                            toast('المتصفح لا يدعم MPEGTS');
+                            showStatus('المتصفح لا يدعم MPEGTS');
                         }
                     }
                 }
             });
-
-            // موبايل تدوير
+            
+            // تدوير تلقائي للموبايل
             art.on('play', () => {
-                if(window.innerWidth < 768) {
-                    art.fullscreen = true;
-                }
+                if(window.innerWidth < 768) art.fullscreen = true;
             });
-        }
-
-        // --- أدوات ---
-        function toast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
-        function showAddForm() { document.getElementById('welcomeScreen').style.display='none'; document.getElementById('addForms').classList.add('active'); }
-        function hideAddForm() { document.getElementById('addForms').classList.remove('active'); document.getElementById('welcomeScreen').style.display='block'; }
-
-        function setTab(mode) {
-            document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-            document.querySelectorAll('#addForms > div[id$="Input"]').forEach(d=>d.style.display='none');
-            if(mode==='xtream') { document.querySelectorAll('.tab')[0].classList.add('active'); document.getElementById('xtreamInput').style.display='block'; }
-            else if(mode==='direct') { document.querySelectorAll('.tab')[1].classList.add('active'); document.getElementById('directInput').style.display='block'; }
-            else { document.querySelectorAll('.tab')[2].classList.add('active'); document.getElementById('m3uInput').style.display='block'; }
-        }
-
-        // --- الحسابات ---
-        function loadAccounts() {
-            const g = document.getElementById('accountsGrid'); g.innerHTML='';
-            if(accounts.length===0) return g.innerHTML='<p style="text-align:center; color:#555; font-size:12px; margin-top:20px;">لا توجد حسابات</p>';
             
-            accounts.forEach((acc, i) => {
-                const d = document.createElement('div'); d.className='user-card';
-                d.innerHTML = `
-                    <div class="user-avatar">${acc.user.charAt(0).toUpperCase()}</div>
-                    <div class="user-details"><h3>${acc.user}</h3><p>${acc.type}</p></div>
-                    <i class="fas fa-trash delete-user" onclick="deleteAcc(${i}, event)"></i>
-                `;
-                d.onclick = () => { if(acc.type==='direct') playDirect(acc.url); else loginXtream(acc); };
-                g.appendChild(d);
+            art.on('error', () => {
+                showStatus('خطأ في البث: تأكد من الرابط أو بروتوكول HTTP');
             });
-        }
-        function deleteAcc(i,e) { e.stopPropagation(); accounts.splice(i,1); localStorage.setItem('xtream_users_art', JSON.stringify(accounts)); loadAccounts(); }
-
-        // --- 1. تشغيل مباشر ---
-        function playDirect(savedUrl) {
-            let url = savedUrl || document.getElementById('dLink').value.trim();
-            if(!url) return toast('أدخل الرابط');
-            
-            if(!savedUrl) {
-                accounts.push({ type:'direct', user:'Stream', url: url });
-                localStorage.setItem('xtream_users_art', JSON.stringify(accounts));
-                loadAccounts();
-            }
-
-            // محاولة ذكية: إذا الرابط xtream عادي (رقم في النهاية) نجرب إضافة m3u8
-            // أما إذا كان المستخدم يريده خام (مثل رابطك) سيحاول المشغل تشغيله عبر mpegts
-            let finalUrl = url;
-            // الملاحظة: في ArtPlayer، نمرر الرابط كما هو، ونحدد النوع في الدالة initArtPlayer
-
-            launchUI('Direct', [{ name: 'Live Stream', logo: '', url: finalUrl }], {type:'direct'});
-            setTimeout(() => initArtPlayer(finalUrl), 500);
-        }
-
-        // --- 2. Xtream ---
-        async function connectXtream() {
-            let host = document.getElementById('xHost').value.trim();
-            let user = document.getElementById('xUser').value.trim();
-            let pass = document.getElementById('xPass').value.trim();
-            if(!host || !user || !pass) return toast('أدخل البيانات');
-            if(!host.startsWith('http')) host = 'http://'+host;
-
-            const apiUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
-            const proxy = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
-
-            try {
-                let res;
-                try { res = await fetch(apiUrl); } catch { res = await fetch(proxy); }
-                const data = await res.json();
-                if(!Array.isArray(data)) throw new Error();
-
-                if(!accounts.some(a=>a.host===host && a.user===user)) {
-                    accounts.push({ type:'xtream', host, user, pass });
-                    localStorage.setItem('xtream_users_art', JSON.stringify(accounts));
-                    loadAccounts();
-                }
-                launchUI(user, data, { type:'xtream', host, user, pass });
-            } catch { toast('فشل الاتصال'); }
-        }
-
-        async function loginXtream(acc) {
-            toast('جاري الاتصال...');
-            const apiUrl = `${acc.host}/player_api.php?username=${acc.user}&password=${acc.pass}&action=get_live_streams`;
-            const proxy = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
-            try {
-                let res;
-                try { res = await fetch(apiUrl); } catch { res = await fetch(proxy); }
-                const data = await res.json();
-                launchUI(acc.user, data, acc);
-            } catch { toast('خطأ في السيرفر'); }
-        }
-
-        // --- 3. M3U ---
-        function startM3U() {
-            const f = document.getElementById('m3uFile').files[0];
-            if(!f) return;
-            document.getElementById('fileName').innerText = f.name;
-            const r = new FileReader();
-            r.onload = (e) => {
-                const lines = e.target.result.split('\n');
-                const chs = [];
-                let curr = { name:'No Name', logo:'', url:'' };
-                lines.forEach(l => {
-                    l = l.trim();
-                    if(l.startsWith('#EXTINF:')) {
-                        curr.name = l.split(',')[1] || 'No Name';
-                        const logo = l.match(/tvg-logo="([^"]*)"/);
-                        if(logo) curr.logo = logo[1];
-                    } else if(l.startsWith('http')) {
-                        curr.url = l;
-                        chs.push({...curr});
-                        curr = { name:'No Name', logo:'', url:'' };
-                    }
-                });
-                launchUI('M3U File', chs, { type:'m3u' });
-            };
-            r.readAsText(f);
-        }
-
-        // --- واجهة المستخدم ---
-        function launchUI(username, channels, auth) {
-            currentAuth = auth;
-            allChannels = channels;
-            document.getElementById('landingScreen').style.display = 'none';
-            document.getElementById('playerScreen').style.display = 'flex';
-            document.getElementById('currentUser').innerText = username;
-            
-            renderChannels(channels);
-        }
-
-        function renderChannels(list) {
-            const c = document.getElementById('chList'); c.innerHTML = '';
-            list.slice(0, 1000).forEach(ch => {
-                const div = document.createElement('div'); div.className = 'ch-row';
-                let img = ch.logo || (currentAuth.type === 'xtream' ? ch.stream_icon : null);
-                
-                div.innerHTML = `
-                    <div style="width:30px; text-align:center;">
-                         ${img ? `<img src="${img}" style="width:100%; height:30px; object-fit:contain;" onerror="this.style.display='none'">` : '<i class="fas fa-tv" style="color:#555"></i>'}
-                    </div>
-                    <span>${ch.name}</span>
-                `;
-                div.onclick = () => playStream(ch, div);
-                c.appendChild(div);
-            });
-        }
-
-        function playStream(ch, el) {
-            if(el) {
-                document.querySelectorAll('.ch-row').forEach(r => r.classList.remove('active'));
-                el.classList.add('active');
-            }
-
-            let url = ch.url;
-            if(currentAuth.type === 'xtream') {
-                // في ArtPlayer، نجرب إرسال الرابط الخام إذا كان السيرفر يدعمه، أو نضيف m3u8
-                // هنا سنقوم بإضافة m3u8 كخيار آمن، لكن يمكنك إزالتها إذا أردت استخدام mpegts
-                const rawUrl = `${currentAuth.host}/live/${currentAuth.user}/${currentAuth.pass}/${ch.stream_id}`;
-                url = rawUrl + ".m3u8"; // نفضل HLS، إذا فشل المستخدم يمكنه استخدام التبويب "Direct" للرابط الخام
-            }
-
-            initArtPlayer(url);
-        }
-
-        function filterChannels() {
-            const v = document.getElementById('searchInp').value.toLowerCase();
-            renderChannels(allChannels.filter(c => c.name.toLowerCase().includes(v)));
         }
     </script>
 </body>
