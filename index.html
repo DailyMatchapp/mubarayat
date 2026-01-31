@@ -3,527 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Xtream Player Pro</title>
+    <title>Xtream Player Pro V4</title>
+    <!-- استدعاء HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* --- الأساسيات --- */
+        /* --- التصميم (نفس التصميم السابق مع تحسينات طفيفة) --- */
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --danger: #ff4757;
+            --bg-gradient: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            --primary: #e94560;
+            --secondary: #0f3460;
             --text: #ffffff;
-            --text-muted: #a0a0a0;
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: 'Tajawal', sans-serif; background: #000; color: var(--text); height: 100vh; overflow: hidden; }
 
-        body {
-            margin: 0; font-family: 'Tajawal', sans-serif;
-            background: var(--bg-gradient); background-size: 400% 400%;
-            animation: gradientAnim 15s ease infinite;
-            color: var(--text); height: 100vh; overflow: hidden;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        @keyframes gradientAnim {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* --- شاشة تسجيل الدخول --- */
+        /* شاشة الدخول */
         .login-wrapper {
-            width: 100%; max-width: 400px; padding: 20px;
-            display: flex; flex-direction: column; z-index: 100;
+            position: fixed; top: 0; right: 0; width: 100%; height: 100%;
+            background: var(--bg-gradient); display: flex; justify-content: center; align-items: center; z-index: 999;
         }
-
-        .login-container {
-            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px);
-            padding: 25px; border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        .login-box {
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 25px;
+            border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1);
             text-align: center;
         }
-
-        .login-container h2 { margin: 0 0 20px 0; font-size: 22px; }
-
-        .login-tabs {
-            display: flex; gap: 10px; margin-bottom: 20px;
-            background: rgba(255,255,255,0.05); padding: 5px; border-radius: 12px;
-        }
-        .tab-btn {
-            flex: 1; padding: 10px; border: none; background: transparent;
-            color: var(--text-muted); cursor: pointer; border-radius: 8px;
-            font-family: 'Tajawal'; font-weight: bold; transition: 0.3s; font-size: 14px;
-        }
-        .tab-btn.active { background: var(--primary); color: #000; }
-
-        .form-section { display: none; }
-        .form-section.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .input-group { margin-bottom: 12px; position: relative; }
-        .input-icon {
-            position: absolute; top: 50%; right: 15px; transform: translateY(-50%);
-            color: var(--text-muted); font-size: 14px;
-        }
+        .login-box h2 { margin-top: 0; color: var(--primary); }
         
-        .toggle-pass {
-            position: absolute; top: 50%; left: 15px; transform: translateY(-50%);
-            color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 5px;
-        }
+        .tabs { display: flex; margin-bottom: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 4px; }
+        .tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 6px; font-size: 14px; transition: 0.3s; }
+        .tab.active { background: var(--primary); font-weight: bold; }
 
-        .login-input {
-            width: 100%; padding: 12px 40px;
-            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-            border-radius: 10px; color: white; font-family: 'Tajawal'; outline: none;
-            transition: 0.3s; font-size: 14px;
+        .inp-group { margin-bottom: 15px; position: relative; }
+        .inp-group i { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: #aaa; }
+        .inp {
+            width: 100%; padding: 12px 40px 12px 10px; border-radius: 8px; border: 1px solid #444;
+            background: rgba(0,0,0,0.5); color: #fff; font-family: inherit; outline: none;
         }
-        .login-input:focus { border-color: var(--primary); background: rgba(255,255,255,0.1); }
+        .inp:focus { border-color: var(--primary); }
 
-        .btn-login {
-            width: 100%; padding: 12px;
-            background: linear-gradient(90deg, var(--secondary), var(--primary));
-            border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer;
-            transition: 0.3s; margin-top: 10px; font-size: 15px;
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 16px;
         }
-        .btn-login:hover { opacity: 0.9; transform: scale(0.98); }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
-        /* --- واجهة المشغل --- */
-        .app-container {
-            display: none; width: 100vw; height: 100vh;
-            background: #000; flex-direction: row;
-            overflow: hidden;
-        }
-
-        /* Sidebar - القائمة الجانبية */
-        .sidebar {
-            width: 320px; background: #121216; border-left: 1px solid #333;
-            display: flex; flex-direction: column; z-index: 10;
-        }
-
-        /* Header: User & Logout */
-        .sidebar-header {
-            padding: 15px; background: rgba(255,255,255,0.02);
-            border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;
-            flex-shrink: 0; /* منع التقلص */
-        }
-        .user-info { display: flex; flex-direction: column; }
-        .user-label { font-size: 11px; color: #888; margin-bottom: 2px; }
-        .user-val { color: var(--primary); font-weight: bold; font-size: 15px; }
+        /* واجهة المشغل */
+        .player-ui { display: none; width: 100vw; height: 100vh; flex-direction: column; }
         
-        .logout-btn {
-            background: rgba(255, 71, 87, 0.1); border: 1px solid rgba(255, 71, 87, 0.3);
-            color: var(--danger); width: 35px; height: 35px; border-radius: 8px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        /* الهيدر العلوي */
+        .top-bar {
+            height: 60px; background: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
+            border-bottom: 1px solid #333;
         }
-        .logout-btn:active { transform: scale(0.9); }
-
-        /* Search Area */
-        .search-container { padding: 10px 15px; background: #121216; flex-shrink: 0; }
-        .search-box { position: relative; }
-        .search-input {
-            width: 100%; padding: 10px 35px 10px 10px; border-radius: 8px; border: 1px solid #333;
-            background: #1a1a20; color: white; font-family: 'Tajawal'; outline: none; font-size: 13px;
-        }
-        .search-icon { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: #666; font-size: 12px; }
-        .clear-search { position: absolute; top: 50%; left: 10px; transform: translateY(-50%); color: #666; cursor: pointer; display: none; }
-
-        /* Channels List */
-        .channels-list {
-            flex-grow: 1; overflow-y: auto; padding: 5px 10px;
-            /* Scrollbar Style */
-            scrollbar-width: thin; scrollbar-color: #333 transparent;
-        }
-        .channel-item {
-            display: flex; align-items: center; gap: 10px; padding: 12px; margin-bottom: 4px;
-            background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer;
-            transition: 0.2s; border-right: 3px solid transparent;
-        }
-        .channel-item:active { background: rgba(255,255,255,0.08); }
-        .channel-item.active { background: rgba(0, 210, 255, 0.15); border-right-color: var(--primary); }
+        .user-info { font-size: 14px; font-weight: bold; color: var(--primary); }
+        .search-wrap { flex: 1; margin: 0 15px; position: relative; max-width: 400px; }
+        .search-inp { width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 8px 30px 8px 10px; border-radius: 20px; }
         
-        .ch-img { width: 40px; height: 40px; background: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .ch-img img { width: 100%; height: 100%; object-fit: contain; }
-        .ch-title { font-size: 13px; line-height: 1.4; color: #ddd; }
-
-        /* Video Area */
-        .video-area {
-            flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-        video { width: 100%; height: 100%; outline: none; }
-
-        /* Loader & Error */
-        .loader {
-            border: 2px solid rgba(255,255,255,0.2); border-top: 2px solid #fff;
-            border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite;
-            display: none; margin-right: 10px; vertical-align: middle;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* منطقة المحتوى */
+        .content-area { flex: 1; display: flex; overflow: hidden; }
         
-        .error-msg {
-            color: #ff6b81; font-size: 13px; margin-top: 15px; display: none;
-            background: rgba(255,0,0,0.1); padding: 8px; border-radius: 6px;
+        /* قائمة القنوات */
+        .channel-list {
+            width: 300px; background: #1a1a1a; overflow-y: auto; border-left: 1px solid #333;
+            display: flex; flex-direction: column;
         }
+        .ch-item {
+            padding: 10px; border-bottom: 1px solid #2a2a2a; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            transition: 0.2s;
+        }
+        .ch-item:hover, .ch-item.active { background: #2a2a2a; }
+        .ch-item.active { border-right: 3px solid var(--primary); background: rgba(233, 69, 96, 0.1); }
+        .ch-icon { width: 35px; height: 35px; background: #000; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+        .ch-icon img { max-width: 100%; max-height: 100%; }
+        .ch-name { font-size: 13px; line-height: 1.4; }
 
-        /* --- تجاوب الهاتف (Mobile Responsive) --- */
+        /* مشغل الفيديو */
+        .video-container { flex: 1; background: #000; display: flex; justify-content: center; align-items: center; position: relative; }
+        video { width: 100%; height: 100%; max-height: 100vh; outline: none; }
+
+        /* التجاوب */
         @media (max-width: 768px) {
-            .app-container { flex-direction: column-reverse; } /* الفيديو فوق والقائمة تحت */
-            
-            .sidebar { 
-                width: 100%; 
-                height: 60%; /* القائمة تأخذ 60% من الشاشة */
-                border-left: none; border-top: 1px solid #333;
-            }
-            
-            .video-area { 
-                height: 40%; /* الفيديو يأخذ 40% من الشاشة */
-                width: 100%; 
-            }
-            
-            .channel-item { padding: 10px; }
+            .player-ui { flex-direction: column-reverse; } /* القائمة بالأسفل */
+            .top-bar { order: 2; height: 50px; } /* البحث بالأسفل */
+            .content-area { flex-direction: column; }
+            .video-container { height: 40vh; flex: none; } /* الفيديو بالأعلى */
+            .channel-list { width: 100%; flex: 1; }
         }
+
+        .loader { display: inline-block; width: 15px; height: 15px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-msg { color: #ff4757; font-size: 12px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <!-- شاشة تسجيل الدخول -->
-    <div class="login-wrapper" id="loginWrapper">
-        <div class="login-container">
-            <h2>Xtream Player</h2>
-
-            <div class="login-tabs">
-                <button class="tab-btn active" onclick="switchTab('xtream')">سيرفر Xtream</button>
-                <button class="tab-btn" onclick="switchTab('m3u')">ملف M3U</button>
+    <!-- 1. واجهة الدخول -->
+    <div class="login-wrapper" id="loginScreen">
+        <div class="login-box">
+            <h2>Xtream Player V4</h2>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="setMode('xtream')">Xtream API</div>
+                <div class="tab" onclick="setMode('m3u')">ملف M3U</div>
             </div>
 
-            <!-- Xtream Form -->
-            <div id="xtreamForm" class="form-section active">
-                <div class="input-group">
-                    <i class="fas fa-server input-icon"></i>
-                    <input type="text" id="host" class="login-input" placeholder="الرابط (Host URL)">
+            <!-- Xtream Inputs -->
+            <div id="xtreamForm">
+                <div class="inp-group">
+                    <i class="fas fa-server"></i>
+                    <input type="text" id="host" class="inp" placeholder="الرابط (Host URL)" value="http://auziatv.com:8080">
                 </div>
-                <div class="input-group">
-                    <i class="fas fa-user input-icon"></i>
-                    <input type="text" id="username" class="login-input" placeholder="اسم المستخدم (Username)">
+                <div class="inp-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="user" class="inp" placeholder="اسم المستخدم" value="Sooolo">
                 </div>
-                <div class="input-group">
-                    <i class="fas fa-lock input-icon"></i>
-                    <i class="fas fa-eye toggle-pass" onclick="togglePasswordVisibility()"></i>
-                    <input type="password" id="password" class="login-input" placeholder="كلمة المرور (Password)">
+                <div class="inp-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="text" id="pass" class="inp" placeholder="كلمة المرور" value="Sooolo2025">
                 </div>
-
-                <button class="btn-login" onclick="loginXtream()">
-                    دخول <span class="loader" id="loginLoader"></span>
+                <button class="btn" onclick="connectXtream()">
+                    <span id="btnText">دخول ومشاهدة</span>
                 </button>
-                
-                <!-- عرض مبسط للحسابات المحفوظة -->
-                <div id="savedAccountsArea" style="display:none; margin-top:15px; text-align:right;">
-                    <small style="color:#666;">الحسابات المحفوظة:</small>
-                    <div id="accountsList" style="margin-top:5px; max-height:100px; overflow-y:auto;"></div>
-                </div>
             </div>
 
-            <!-- M3U Form -->
-            <div id="m3uForm" class="form-section">
-                <input type="file" id="m3uInput" accept=".m3u,.m3u8" style="display:none" onchange="processM3UFile()">
-                <button class="btn-login" onclick="document.getElementById('m3uInput').click()" style="background:var(--glass-bg); border:1px solid #444;">
-                    <i class="fas fa-upload"></i> اختر ملف من الجهاز
-                </button>
+            <!-- M3U Inputs -->
+            <div id="m3uForm" style="display:none">
+                <div class="inp-group" style="border: 2px dashed #444; padding: 20px; cursor: pointer;" onclick="document.getElementById('m3uFile').click()">
+                    <i class="fas fa-cloud-upload-alt" style="position:static; font-size: 30px; display:block; margin-bottom:10px;"></i>
+                    <span id="fileName">اضغط لاختيار ملف</span>
+                    <input type="file" id="m3uFile" accept=".m3u,.m3u8" hidden onchange="parseM3U()">
+                </div>
             </div>
 
             <div class="error-msg" id="errorMsg"></div>
         </div>
     </div>
 
-    <!-- واجهة المشغل -->
-    <div class="app-container" id="appScreen">
-        <!-- القائمة الجانبية -->
-        <div class="sidebar">
-            
-            <!-- 1. Header (User & Logout) -->
-            <div class="sidebar-header">
-                <div class="user-info">
-                    <span class="user-label">المستخدم</span>
-                    <span class="user-val" id="displayUser">Guest</span>
-                </div>
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-
-            <!-- 2. Search Bar (Fixed below header) -->
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="searchInput" class="search-input" placeholder="بحث عن قناة..." onkeyup="handleSearch()">
-                    <i class="fas fa-times clear-search" id="clearSearchBtn" onclick="clearSearch()"></i>
-                </div>
-            </div>
-
-            <!-- 3. Channel List (Scrollable) -->
-            <div class="channels-list" id="channelsContainer">
-                <!-- القنوات ستظهر هنا -->
-            </div>
+    <!-- 2. واجهة المشغل -->
+    <div class="player-ui" id="playerScreen">
+        
+        <div class="video-container">
+            <video id="mainVideo" controls autoplay playsinline></video>
         </div>
 
-        <!-- منطقة الفيديو -->
-        <div class="video-area">
-            <video id="videoPlayer" controls autoplay playsinline></video>
+        <div class="top-bar">
+            <div class="user-info" id="displayUser">User</div>
+            <div class="search-wrap">
+                <input type="text" class="search-inp" placeholder="بحث..." onkeyup="filterChannels(this.value)">
+                <i class="fas fa-search" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#666; font-size:12px"></i>
+            </div>
+            <button onclick="logout()" style="background:none; border:none; color:#fff; font-size:18px;"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+
+        <div class="content-area">
+            <div class="channel-list" id="channelList">
+                <!-- القنوات هنا -->
+            </div>
         </div>
     </div>
 
     <script>
-        // --- إعدادات النظام ---
-        const CORS_PROXY = "https://corsproxy.io/?"; // وسيط سريع ومجاني
+        // --- إعدادات البروكسي (السر لعمل السيرفرات المحجوبة) ---
+        // نستخدم بروكسي موثوق يدعم الفيديو
+        const PROXY_URL = "https://corsproxy.io/?"; 
+        
         let allChannels = [];
-        let savedAccounts = [];
-        let currentAuth = {};
+        let currentAuth = {}; // لتخزين بيانات الجلسة
 
-        // عند التحميل
-        window.addEventListener('DOMContentLoaded', loadSavedAccounts);
-
-        // --- التبديل بين التبويبات ---
-        function switchTab(mode) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
-            document.getElementById(mode + 'Form').classList.add('active');
-            document.querySelector(`button[onclick="switchTab('${mode}')"]`).classList.add('active');
-            hideError();
+        // 1. إدارة التبويبات
+        function setMode(mode) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if(mode === 'xtream') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('xtreamForm').style.display = 'block';
+                document.getElementById('m3uForm').style.display = 'none';
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('xtreamForm').style.display = 'none';
+                document.getElementById('m3uForm').style.display = 'block';
+            }
+            showError('');
         }
 
-        function togglePasswordVisibility() {
-            const p = document.getElementById('password');
-            p.type = p.type === 'password' ? 'text' : 'password';
-        }
-
-        // --- منطق الاتصال الذكي (Smart Login) ---
-        async function loginXtream() {
+        // 2. الاتصال بسيرفر Xtream
+        async function connectXtream() {
             let host = document.getElementById('host').value.trim();
-            const user = document.getElementById('username').value.trim();
-            const pass = document.getElementById('password').value.trim();
-            const loader = document.getElementById('loginLoader');
+            const user = document.getElementById('user').value.trim();
+            const pass = document.getElementById('pass').value.trim();
+            const btn = document.querySelector('.btn');
 
-            if(!host || !user || !pass) { showError('يرجى تعبئة البيانات'); return; }
+            if(!host || !user || !pass) return showError("يرجى ملء جميع البيانات");
 
-            // تنظيف الرابط
-            if(host.endsWith('/')) host = host.slice(0, -1);
+            // إصلاح الرابط تلقائياً
             if(!host.startsWith('http')) host = 'http://' + host;
+            if(host.endsWith('/')) host = host.slice(0, -1);
 
-            hideError();
-            loader.style.display = 'inline-block';
+            btn.innerHTML = '<span class="loader"></span> جاري الاتصال...';
+            btn.disabled = true;
 
-            // تحديد ما إذا كنا بحاجة للوسيط (اكتشاف تلقائي)
-            // إذا كان الموقع HTTPS والسيرفر HTTP، نحتاج وسيط إجبارياً
-            const isSiteHttps = window.location.protocol === 'https:';
-            const isHostHttp = host.startsWith('http://');
-            let needProxy = (isSiteHttps && isHostHttp);
-
+            // بناء رابط API
             const apiUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
             
+            // دائماً نستخدم البروكسي لتجنب مشاكل HTTP/HTTPS
+            const proxiedUrl = PROXY_URL + encodeURIComponent(apiUrl);
+
             try {
-                // المحاولة الأولى: استخدام الوسيط مباشرة إذا لزم الأمر، أو الاتصال المباشر
-                let finalUrl = needProxy ? (CORS_PROXY + encodeURIComponent(apiUrl)) : apiUrl;
+                const req = await fetch(proxiedUrl);
+                if(!req.ok) throw new Error("فشل الاتصال");
                 
-                let response;
-                try {
-                    response = await fetch(finalUrl);
-                } catch(e) {
-                    // إذا فشل الاتصال المباشر (بسبب CORS مثلاً)، نفعّل الوسيط ونحاول مرة أخرى تلقائياً
-                    console.log("Direct connect failed, switching to proxy...");
-                    needProxy = true;
-                    response = await fetch(CORS_PROXY + encodeURIComponent(apiUrl));
+                const data = await req.json();
+                
+                // التحقق من صحة الاشتراك
+                if(!Array.isArray(data) && data.user_info && data.user_info.auth === 0) {
+                    throw new Error("بيانات الدخول غير صحيحة");
                 }
 
-                if(!response.ok) throw new Error("فشل الاتصال");
-
-                const data = await response.json();
+                // إذا كانت البيانات مصفوفة فهي القنوات، وإذا كائن فنتحقق منه
+                const channels = Array.isArray(data) ? data : (data.length ? data : []);
                 
-                // التحقق من صحة البيانات
-                if(!Array.isArray(data) && !data.user_info) throw new Error("بيانات خطأ");
-                if(data.user_info && data.user_info.auth === 0) throw new Error("البيانات غير صحيحة");
+                if(channels.length === 0) throw new Error("لا توجد قنوات متاحة");
 
-                // نجاح! حفظ البيانات
-                saveAccount(host, user, pass);
-                
-                // حفظ حالة الجلسة (هل نستخدم وسيط أم لا؟)
-                currentAuth = { host, user, pass, type: 'xtream', useProxy: needProxy };
-                
-                // معالجة القنوات
-                const channels = Array.isArray(data) ? data : []; // بعض السيرفرات ترجع هيكلية مختلفة
-                allChannels = channels.map(ch => ({...ch, type: 'xtream'}));
+                currentAuth = { type: 'xtream', host, user, pass };
+                allChannels = channels.map(ch => ({
+                    name: ch.name,
+                    icon: ch.stream_icon,
+                    // حفظ المعرف فقط لبناء الرابط لاحقاً
+                    id: ch.stream_id,
+                    extension: ch.container_extension || 'ts'
+                }));
 
-                openPlayer(user);
+                loadPlayer(user);
 
-            } catch(err) {
-                console.error(err);
-                showError("فشل الاتصال: تأكد من الرابط والبيانات.");
+            } catch(e) {
+                console.error(e);
+                showError("خطأ: " + e.message + "<br>تأكد من صحة الرابط أو انتهاء الاشتراك");
             } finally {
-                loader.style.display = 'none';
+                btn.innerHTML = '<span id="btnText">دخول ومشاهدة</span>';
+                btn.disabled = false;
             }
         }
 
-        // --- تشغيل الفيديو (مع دعم الوسيط التلقائي) ---
+        // 3. معالجة ملف M3U
+        function parseM3U() {
+            const file = document.getElementById('m3uFile').files[0];
+            if(!file) return;
+
+            document.getElementById('fileName').innerText = file.name;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split(/\r?\n/); // دعم جميع الأنظمة
+                allChannels = [];
+                let currentCh = { name: 'بدون اسم' };
+
+                for(let line of lines) {
+                    line = line.trim();
+                    if(!line) continue;
+
+                    if(line.startsWith('#EXTINF:')) {
+                        const info = line.split(',');
+                        currentCh.name = info[info.length-1];
+                        const logo = line.match(/tvg-logo="([^"]*)"/);
+                        if(logo) currentCh.icon = logo[1];
+                    } else if(line.startsWith('http') || line.endsWith('.m3u8') || line.endsWith('.ts')) {
+                        currentCh.url = line;
+                        allChannels.push({...currentCh});
+                        currentCh = { name: 'بدون اسم' };
+                    }
+                }
+
+                if(allChannels.length > 0) {
+                    currentAuth = { type: 'm3u' };
+                    loadPlayer("ملف محلي");
+                } else {
+                    showError("الملف فارغ أو غير مدعوم");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 4. تشغيل الواجهة
+        function loadPlayer(username) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('playerScreen').style.display = 'flex';
+            document.getElementById('displayUser').innerText = username;
+            
+            // عرض أول 100 قناة للسرعة
+            renderChannels(allChannels.slice(0, 100));
+        }
+
+        function renderChannels(list) {
+            const container = document.getElementById('channelList');
+            container.innerHTML = '';
+            
+            list.forEach(ch => {
+                const div = document.createElement('div');
+                div.className = 'ch-item';
+                div.innerHTML = `
+                    <div class="ch-icon">
+                        ${ch.icon ? `<img src="${ch.icon}" loading="lazy" onerror="this.style.display='none'">` : '<i class="fas fa-tv" style="color:#555"></i>'}
+                    </div>
+                    <div class="ch-name">${ch.name}</div>
+                `;
+                div.onclick = () => playChannel(ch, div);
+                container.appendChild(div);
+            });
+        }
+
+        // 5. تشغيل القناة (الجزء الأهم: Proxy Loader)
         function playChannel(ch, el) {
-            // تحديث الواجهة
-            document.querySelectorAll('.channel-item').forEach(e => e.classList.remove('active'));
+            // تحديث التصميم
+            document.querySelectorAll('.ch-item').forEach(i => i.classList.remove('active'));
             if(el) el.classList.add('active');
-            
-            let url = ch.url;
-            
-            // بناء الرابط
-            if(ch.type === 'xtream') {
-                url = `${currentAuth.host}/live/${currentAuth.user}/${currentAuth.pass}/${ch.stream_id}.m3u8`;
+
+            let streamUrl = "";
+            if(currentAuth.type === 'xtream') {
+                // بناء رابط Xtream
+                streamUrl = `${currentAuth.host}/live/${currentAuth.user}/${currentAuth.pass}/${ch.id}.m3u8`; // نستخدم .m3u8 أفضل من .ts للمتصفح
+            } else {
+                streamUrl = ch.url;
             }
 
-            // تطبيق الوسيط إذا تم اكتشافه عند تسجيل الدخول
-            if(currentAuth.useProxy) {
-                url = CORS_PROXY + encodeURIComponent(url);
-            }
+            const video = document.getElementById('mainVideo');
 
-            const video = document.getElementById('videoPlayer');
-            
-            if(Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                // التعامل مع أخطاء الستريم
-                hls.on(Hls.Events.ERROR, function (event, data) {
+            if (Hls.isSupported()) {
+                // تدمير المشغل السابق
+                if(window.hls) window.hls.destroy();
+
+                // إعدادات خاصة لإجبار المرور عبر البروكسي
+                const config = {
+                    // هذه الوظيفة تعترض كل طلب شبكة يقوم به المشغل
+                    // وتضيف البروكسي قبل الرابط
+                    loader: class CustomLoader extends Hls.DefaultConfig.loader {
+                        constructor(config) {
+                            super(config);
+                            const load = this.load.bind(this);
+                            this.load = function (context, config, callbacks) {
+                                // إذا كان الرابط لا يحتوي على البروكسي أصلاً، نضيفه
+                                if (context.url.startsWith('http') && !context.url.includes('corsproxy.io')) {
+                                    context.url = PROXY_URL + encodeURIComponent(context.url);
+                                }
+                                load(context, config, callbacks);
+                            };
+                        }
+                    }
+                };
+
+                window.hls = new Hls(config);
+                window.hls.loadSource(streamUrl); // الرابط الأصلي، والـ Loader سيقوم بالباقي
+                window.hls.attachMedia(video);
+                window.hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                
+                // معالجة الأخطاء
+                window.hls.on(Hls.Events.ERROR, function (event, data) {
                     if (data.fatal) {
-                         // محاولة أخيرة عند الفشل
-                        console.log("Stream Error, retrying...");
-                        hls.startLoad();
+                        console.log("خطأ في التشغيل، محاولة إعادة التحميل...");
+                        window.hls.startLoad();
                     }
                 });
-            } else if(video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = url;
+
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // لأجهزة آيفون (Safari) لا يدعم Hls.js
+                // هنا يجب تمرير الرابط كاملاً مع البروكسي
+                video.src = PROXY_URL + encodeURIComponent(streamUrl);
                 video.play();
             }
         }
 
-        // --- واجهة المستخدم ---
-        function openPlayer(username) {
-            document.getElementById('loginWrapper').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'flex';
-            document.getElementById('displayUser').innerText = username;
-            renderChannels(allChannels.slice(0, 200)); // عرض مبدئي
-        }
-
-        function renderChannels(list) {
-            const container = document.getElementById('channelsContainer');
-            container.innerHTML = '';
-            
-            if(list.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد قنوات</div>';
-                return;
-            }
-
-            // استخدام Fragment لتحسين الأداء
-            const frag = document.createDocumentFragment();
-            list.forEach(ch => {
-                const div = document.createElement('div');
-                div.className = 'channel-item';
-                const img = (ch.type === 'xtream' ? ch.stream_icon : ch.logo) || '';
-                
-                div.innerHTML = `
-                    <div class="ch-img">
-                        ${img ? `<img src="${img}" loading="lazy" onerror="this.style.display='none'">` : '<i class="fas fa-tv" style="color:#444"></i>'}
-                    </div>
-                    <div class="ch-title">${ch.name}</div>
-                `;
-                div.onclick = () => playChannel(ch, div);
-                frag.appendChild(div);
-            });
-            container.appendChild(frag);
-        }
-
-        // --- البحث ---
-        let searchTimeout;
-        function handleSearch() {
-            clearTimeout(searchTimeout);
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            document.getElementById('clearSearchBtn').style.display = term ? 'block' : 'none';
-            
-            // تأخير البحث قليلاً لتحسين الأداء
-            searchTimeout = setTimeout(() => {
-                const filtered = allChannels.filter(ch => ch.name.toLowerCase().includes(term));
-                renderChannels(filtered.slice(0, 100)); // عرض أول 100 نتيجة فقط للسرعة
-            }, 300);
-        }
-
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            handleSearch();
-        }
-
-        // --- إدارة الحسابات والملفات ---
-        function saveAccount(host, user, pass) {
-            let accs = JSON.parse(localStorage.getItem('xtream_accs') || '[]');
-            // إزالة القديم إذا وجد وإضافة الجديد في البداية
-            accs = accs.filter(a => !(a.host === host && a.user === user));
-            accs.unshift({ host, user, pass });
-            localStorage.setItem('xtream_accs', JSON.stringify(accs));
-        }
-
-        function loadSavedAccounts() {
-            const accs = JSON.parse(localStorage.getItem('xtream_accs') || '[]');
-            const list = document.getElementById('accountsList');
-            const area = document.getElementById('savedAccountsArea');
-            
-            if(accs.length > 0) {
-                area.style.display = 'block';
-                list.innerHTML = accs.map(a => `
-                    <div style="padding:8px; border-bottom:1px solid #333; cursor:pointer; display:flex; justify-content:space-between;" 
-                         onclick="fillLogin('${a.host}', '${a.user}', '${a.pass}')">
-                        <span style="color:#fff; font-size:12px">${a.user}</span>
-                        <span style="color:#666; font-size:10px">${new URL(a.host).hostname}</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function fillLogin(h, u, p) {
-            document.getElementById('host').value = h;
-            document.getElementById('username').value = u;
-            document.getElementById('password').value = p;
-        }
-
-        function processM3UFile() {
-            const file = document.getElementById('m3uInput').files[0];
-            if(!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const lines = e.target.result.split('\n');
-                allChannels = [];
-                let curr = { name: 'Channel', type: 'm3u' };
-                
-                lines.forEach(line => {
-                    line = line.trim();
-                    if(line.startsWith('#EXTINF:')) {
-                        const parts = line.split(',');
-                        curr.name = parts[parts.length-1];
-                        const logo = line.match(/tvg-logo="([^"]*)"/);
-                        if(logo) curr.logo = logo[1];
-                    } else if(line.startsWith('http')) {
-                        curr.url = line;
-                        allChannels.push({...curr});
-                        curr = { name: 'Channel', type: 'm3u' };
-                    }
-                });
-                
-                currentAuth = { type: 'm3u', useProxy: false }; // ملف محلي لا يحتاج بروكسي عادة
-                openPlayer('ملف محلي');
-            };
-            reader.readAsText(file);
+        function filterChannels(query) {
+            query = query.toLowerCase();
+            const filtered = allChannels.filter(ch => ch.name.toLowerCase().includes(query));
+            renderChannels(filtered.slice(0, 100));
         }
 
         function logout() {
@@ -532,10 +388,9 @@
 
         function showError(msg) {
             const el = document.getElementById('errorMsg');
-            el.innerText = msg;
-            el.style.display = 'block';
+            el.innerHTML = msg;
+            el.style.display = msg ? 'block' : 'none';
         }
-        function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
 
     </script>
 </body>
