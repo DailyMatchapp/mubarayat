@@ -3,7 +3,10 @@ let allChannels = [];
 let favorites = JSON.parse(localStorage.getItem('xtream_favorites')) || [];
 let hls;
 
-// التحقق من وجود تسجيل دخول سابق
+// استخدام بروكسي عام لتجاوز مشكلة CORS
+// ملاحظة: البروكسي المجاني قد يكون بطيئاً أحياناً
+const CORS_PROXY = "https://api.allorigins.win/get?url=";
+
 window.onload = () => {
     const saved = localStorage.getItem('xtream_creds');
     if(saved) {
@@ -14,7 +17,7 @@ window.onload = () => {
 };
 
 async function login() {
-    const host = document.getElementById('host').value.trim();
+    const host = document.getElementById('host').value.trim().replace(/\/$/, '');
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
 
@@ -23,14 +26,20 @@ async function login() {
         return;
     }
 
-    // تصحيح الرابط إذا انتهى بـ /
-    creds = { host: host.replace(/\/$/, ''), username, password };
+    creds = { host, username, password };
+    
+    // بناء رابط الـ API
+    const targetUrl = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}`;
     
     try {
-        const response = await fetch(`${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}`);
+        // نمرر الرابط عبر البروكسي
+        const response = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
         const data = await response.json();
         
-        if(data.user_info && data.user_info.auth === 1) {
+        // البروكسي allorigins يرجع النتيجة داخل contents
+        const jsonResponse = JSON.parse(data.contents);
+
+        if(jsonResponse.user_info && jsonResponse.user_info.auth === 1) {
             localStorage.setItem('xtream_creds', JSON.stringify(creds));
             showPlayer();
             loadCategories();
@@ -38,7 +47,7 @@ async function login() {
             document.getElementById('error-msg').innerText = 'فشل تسجيل الدخول. تأكد من البيانات.';
         }
     } catch (e) {
-        document.getElementById('error-msg').innerText = 'خطأ في الاتصال (تأكد من CORS أو رابط HTTP/HTTPS)';
+        document.getElementById('error-msg').innerText = 'خطأ في الاتصال. تأكد أن الرابط يعمل.';
         console.error(e);
     }
 }
@@ -55,9 +64,10 @@ function logout() {
 
 async function loadCategories() {
     try {
-        const url = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}&action=get_live_categories`;
-        const res = await fetch(url);
-        const categories = await res.json();
+        const targetUrl = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}&action=get_live_categories`;
+        const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
+        const data = await res.json();
+        const categories = JSON.parse(data.contents);
         
         const list = document.getElementById('categories-list');
         list.innerHTML = `<li onclick="loadChannels('all')">كل القنوات</li>`;
@@ -69,7 +79,6 @@ async function loadCategories() {
             list.appendChild(li);
         });
         
-        // تحميل أول دفعة قنوات
         loadChannels('all'); 
     } catch (e) {
         console.error('Error loading categories:', e);
@@ -80,13 +89,15 @@ async function loadChannels(catId) {
     document.getElementById('channels-container').innerHTML = '<p style="text-align:center">جاري التحميل...</p>';
     
     try {
-        const url = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}&action=get_live_streams&category_id=${catId === 'all' ? '' : catId}`;
-        const res = await fetch(url);
-        allChannels = await res.json();
+        const targetUrl = `${creds.host}/player_api.php?username=${creds.username}&password=${creds.password}&action=get_live_streams&category_id=${catId === 'all' ? '' : catId}`;
+        const res = await fetch(CORS_PROXY + encodeURIComponent(targetUrl));
+        const data = await res.json();
+        allChannels = JSON.parse(data.contents);
         
         renderChannels(allChannels);
     } catch (e) {
         console.error('Error loading channels:', e);
+        document.getElementById('channels-container').innerHTML = '<p style="text-align:center">فشل تحميل القائمة</p>';
     }
 }
 
@@ -94,7 +105,10 @@ function renderChannels(channels) {
     const container = document.getElementById('channels-container');
     container.innerHTML = '';
 
-    channels.forEach(ch => {
+    // عرض أول 100 قناة فقط لتجنب تعليق المتصفح إذا كانت القائمة ضخمة
+    const displayList = channels.slice(0, 100); 
+
+    displayList.forEach(ch => {
         const isFav = favorites.includes(ch.stream_id);
         const card = document.createElement('div');
         card.className = 'channel-card';
@@ -102,7 +116,7 @@ function renderChannels(channels) {
             <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, ${ch.stream_id})">
                 <i class="${isFav ? 'fas' : 'far'} fa-star"></i>
             </button>
-            <img src="${ch.stream_icon || 'https://via.placeholder.com/50'}" class="channel-icon" onerror="this.src='https://via.placeholder.com/50'">
+            <img src="${ch.stream_icon}" class="channel-icon" onerror="this.src='https://via.placeholder.com/50?text=TV'">
             <div class="channel-info">
                 <strong>${ch.name}</strong>
             </div>
@@ -115,6 +129,7 @@ function renderChannels(channels) {
 }
 
 function playChannel(ch) {
+    // رابط البث المباشر (غالباً لا يحتاج لبروكسي JSON لكن يحتاج لسماح Mixed Content)
     const streamUrl = `${creds.host}/live/${creds.username}/${creds.password}/${ch.stream_id}.m3u8`;
     const video = document.getElementById('video');
     document.getElementById('current-channel-name').innerText = ch.name;
@@ -125,17 +140,21 @@ function playChannel(ch) {
         hls.loadSource(streamUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play();
+            video.play().catch(e => console.log("Auto-play blocked"));
+        });
+        hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+               console.error("HLS Error:", data);
+               alert("خطأ في تشغيل القناة: قد يكون السبب بروتوكول HTTP غير الآمن.");
+            }
         });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = streamUrl;
-        video.addEventListener('loadedmetadata', function() {
-            video.play();
-        });
+        video.play();
     }
 }
 
-// التحكم في العرض (List/Grid)
+// ... بقية دوال البحث والمفضلة (نفس الكود السابق) ...
 function setView(type) {
     const container = document.getElementById('channels-container');
     if(type === 'list') {
@@ -147,14 +166,12 @@ function setView(type) {
     }
 }
 
-// البحث
 function searchChannels() {
     const query = document.getElementById('search-input').value.toLowerCase();
     const filtered = allChannels.filter(ch => ch.name.toLowerCase().includes(query));
     renderChannels(filtered);
 }
 
-// المفضلة
 function toggleFav(e, id) {
     e.stopPropagation();
     if(favorites.includes(id)) {
@@ -163,7 +180,6 @@ function toggleFav(e, id) {
         favorites.push(id);
     }
     localStorage.setItem('xtream_favorites', JSON.stringify(favorites));
-    // إعادة رسم العنصر الحالي لتحديث الأيقونة
     const btn = e.currentTarget;
     btn.classList.toggle('active');
     const icon = btn.querySelector('i');
