@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xtream Web Player Pro V3</title>
+    <title>Xtream Web Player Pro V3 - Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -50,15 +50,13 @@
             border: 1px solid var(--glass-border);
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             text-align: center;
-            overflow-y: auto; /* للسماح بالسكرول في الشاشات الصغيرة */
+            overflow-y: auto;
         }
         
-        /* إخفاء شريط التمرير للجمالية */
         .login-container::-webkit-scrollbar { width: 0; }
 
         .login-container h2 { margin: 0 0 20px 0; letter-spacing: 1px; }
 
-        /* التبويبات */
         .login-tabs {
             display: flex; gap: 10px; margin-bottom: 20px;
             background: rgba(255,255,255,0.05); padding: 5px; border-radius: 12px;
@@ -70,7 +68,6 @@
         }
         .tab-btn.active { background: var(--primary); color: #000; box-shadow: 0 2px 10px rgba(0,210,255,0.3); }
 
-        /* الحقول */
         .form-section { display: none; animation: fadeIn 0.4s ease; }
         .form-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -81,7 +78,6 @@
             color: var(--text-muted); font-size: 14px; z-index: 2;
         }
         
-        /* زر العين (Password Eye) */
         .toggle-pass {
             position: absolute; top: 50%; left: 15px; transform: translateY(-50%);
             color: var(--text-muted); cursor: pointer; font-size: 14px; z-index: 2; padding: 5px;
@@ -89,14 +85,20 @@
         .toggle-pass:hover { color: var(--primary); }
 
         .login-input {
-            width: 100%; padding: 12px 40px 12px 40px; /* مسافة للأيقونات يمين ويسار */
+            width: 100%; padding: 12px 40px 12px 40px;
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
             border-radius: 10px; color: white; font-family: 'Tajawal'; outline: none;
             transition: 0.3s; font-size: 14px;
         }
         .login-input:focus { border-color: var(--primary); background: rgba(255,255,255,0.1); }
 
-        /* قائمة الحسابات المحفوظة */
+        /* Checkbox Style */
+        .proxy-check {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-bottom: 15px; font-size: 13px; color: var(--text-muted); cursor: pointer;
+        }
+        .proxy-check input { cursor: pointer; accent-color: var(--primary); }
+
         .saved-accounts-area {
             margin-top: 25px; border-top: 1px solid var(--glass-border); padding-top: 15px;
             text-align: right;
@@ -126,7 +128,6 @@
         }
         .btn-delete-acc:hover { opacity: 1; transform: scale(1.1); }
 
-        /* أزرار الإجراءات */
         .btn-login {
             width: 100%; padding: 12px;
             background: linear-gradient(90deg, var(--secondary), var(--primary));
@@ -135,76 +136,17 @@
         }
         .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3); }
 
-        /* M3U File Upload - تصحيح الإطار */
-.file-upload-wrapper {
-    position: relative;
-    
-    /* جعل العنصر صندوقاً مرناً لتوسيط المحتوى */
-    display: flex;
-    flex-direction: column; /* ترتيب العناصر فوق بعض */
-    align-items: center;    /* توسيط أفقي */
-    justify-content: center; /* توسيط عمودي */
-    
-    width: 100%;
-    height: 140px; /* تحديد ارتفاع ثابت لضمان ظهور الإطار بالكامل */
-    
-    /* تصميم الإطار المتقطع */
-    border: 2px dashed rgba(255, 255, 255, 0.3); /* جعلنا اللون أكثر وضوحاً قليلاً */
-    border-radius: 15px;
-    background: rgba(255, 255, 255, 0.02);
-    
-    margin-bottom: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    /* مهم جداً لحساب الحواف والبادينغ داخل العرض */
-    box-sizing: border-box; 
-}
-
-/* التأثير عند التمرير */
-.file-upload-wrapper:hover {
-    border-color: var(--primary);
-    background: rgba(0, 210, 255, 0.05);
-    transform: translateY(-2px); /* حركة بسيطة للأعلى */
-}
-
-/* تنسيق حقل الإدخال المخفي */
-.file-upload-wrapper input {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    cursor: pointer;
-    z-index: 2; 
-}
-
-/* تنسيق النصوص والأيقونات */
-.file-upload-text {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 13px;
-    pointer-events: none; 
-}
-
-.file-upload-text i {
-    font-size: 32px; 
-    margin-bottom: 10px;
-    display: block;
-    color: var(--primary);
-    transition: 0.3s;
-}
-
-
-.file-upload-wrapper:hover .file-upload-text i {
-    transform: scale(1.1);
-}
-
-
-
-
-
+        .file-upload-wrapper {
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 140px; border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 15px; background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 15px; cursor: pointer; transition: all 0.3s ease; box-sizing: border-box; 
+        }
+        .file-upload-wrapper:hover { border-color: var(--primary); background: rgba(0, 210, 255, 0.05); transform: translateY(-2px); }
+        .file-upload-wrapper input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2; }
+        .file-upload-text { text-align: center; color: var(--text-muted); font-size: 13px; pointer-events: none; }
+        .file-upload-text i { font-size: 32px; margin-bottom: 10px; display: block; color: var(--primary); transition: 0.3s; }
+        .file-upload-wrapper:hover .file-upload-text i { transform: scale(1.1); }
 
         /* --- واجهة المشغل --- */
         .app-container {
@@ -215,19 +157,13 @@
             flex-direction: row;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 300px; background: rgba(0, 0, 0, 0.4);
-            border-left: 1px solid var(--glass-border); display: flex; flex-direction: column;
-        }
-
+        .sidebar { width: 300px; background: rgba(0, 0, 0, 0.4); border-left: 1px solid var(--glass-border); display: flex; flex-direction: column; }
         .sidebar-header { padding: 15px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
         .user-label { font-size: 12px; color: var(--text-muted); }
         .user-val { color: var(--primary); font-weight: bold; font-size: 14px; }
         .logout-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .logout-btn:hover { font-size: 17px; transition: 0.1s;  }
+        .logout-btn:hover { font-size: 17px; }
 
-        /* Search */
         .search-container { padding: 12px; }
         .search-box { position: relative; }
         .search-input {
@@ -243,7 +179,6 @@
         }
         .clear-search:hover { color: var(--danger); }
 
-        /* Channel List */
         .channels-list { flex-grow: 1; overflow-y: auto; padding: 10px; }
         .channel-item {
             display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 5px;
@@ -257,7 +192,6 @@
         .ch-img img { width: 100%; height: 100%; object-fit: contain; }
         .ch-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Video Area */
         .video-area { flex-grow: 1; background: #000; display: flex; align-items: center; justify-content: center; position: relative; }
         video { width: 100%; height: 100%; outline: none; }
 
@@ -273,7 +207,6 @@
             color: #ff6b81; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 12px; display: none; 
         }
 
-        /* --- تجاوب الشاشات (Responsive) --- */
         @media (max-width: 768px) {
             .app-container { flex-direction: column-reverse; width: 100vw; height: 100vh; border-radius: 0; border: none; }
             .sidebar { width: 100%; height: 45%; border-left: none; border-top: 1px solid var(--glass-border); }
@@ -281,56 +214,23 @@
             .login-wrapper { padding: 15px; }
         }
 
-      /* --- تصميم شريط التمرير المخصص --- */
-
-/* 1. تحديد عرض وارتفاع الشريط الأساسي */
-::-webkit-scrollbar {
-    width: 14px;  /* العرض الكلي للمساحة المخصصة للشريط */
-    height: 14px; /* الارتفاع للشريط الأفقي */
-}
-
-/* 2. تصميم المسار (الخلفية التي يتحرك فيها الشريط) */
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2); /* خلفية داكنة شفافة */
-    border-radius: 10px;
-}
-
-/* 3. تصميم المقبض (الجزء المتحرك) - الوضع العادي */
-::-webkit-scrollbar-thumb {
-    background-color: var(--secondary); /* اللون الأساسي (أزرق غامق) */
-    border-radius: 10px;       /* حواف دائرية */
-    
-    /* الخدعة: نجعل الحدود شفافة وعريضة، ونقص الخلفية لتظهر في الوسط فقط */
-    border: 5px solid transparent; 
-    background-clip: content-box; 
-    
-    transition: all 0.3s ease; /* نعومة الحركة عند التغيير */
-}
-
-/* 4. عند وضع الماوس على المقبض (Hover) */
-::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary); /* تغيير اللون إلى السماوي المضيء */
-    
-    /* تقليل حجم الحدود الشفافة مما يجعل الشريط الملون يبدو وكأنه كبر */
-    border: 2px solid transparent; 
-}
-
+        ::-webkit-scrollbar { width: 14px; height: 14px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background-color: var(--secondary); border-radius: 10px; border: 5px solid transparent; background-clip: content-box; transition: all 0.3s ease; }
+        ::-webkit-scrollbar-thumb:hover { background-color: var(--primary); border: 2px solid transparent; }
     </style>
 </head>
 <body>
 
-    <!-- غلاف شاشة الدخول -->
     <div class="login-wrapper" id="loginWrapper">
         <div class="login-container">
             <h2>Xtream Web Player <span style="color:var(--primary); font-size:0.6em; vertical-align: super;">V3</span></h2>
 
-            <!-- تبويبات -->
             <div class="login-tabs">
                 <button class="tab-btn active" onclick="switchTab('xtream')">سيرفر Xtream</button>
                 <button class="tab-btn" onclick="switchTab('m3u')">ملف M3U</button>
             </div>
 
-            <!-- نموذج Xtream -->
             <div id="xtreamForm" class="form-section active">
                 <div class="input-group">
                     <i class="fas fa-server input-icon"></i>
@@ -342,25 +242,26 @@
                 </div>
                 <div class="input-group">
                     <i class="fas fa-lock input-icon"></i>
-                    <!-- زر العين -->
                     <i class="fas fa-eye toggle-pass" onclick="togglePasswordVisibility()"></i>
                     <input type="password" id="password" class="login-input" placeholder="كلمة المرور">
                 </div>
+
+                <!-- خيار الوسيط الجديد -->
+                <label class="proxy-check" title="قم بتفعيل هذا الخيار إذا واجهت خطأ Failed to Fetch">
+                    <input type="checkbox" id="useProxy" checked>
+                    تفعيل وسيط CORS (لحل مشاكل الاتصال)
+                </label>
 
                 <button class="btn-login" onclick="loginXtream()">
                     تسجيل الدخول <span class="loader" id="loginLoader"></span>
                 </button>
 
-                <!-- قسم الحسابات المحفوظة -->
                 <div class="saved-accounts-area" id="savedAccountsArea" style="display: none;">
                     <span class="saved-label">الحسابات المحفوظة</span>
-                    <div class="accounts-list" id="accountsList">
-                        <!-- الحسابات ستظهر هنا -->
-                    </div>
+                    <div class="accounts-list" id="accountsList"></div>
                 </div>
             </div>
 
-            <!-- نموذج M3U -->
             <div id="m3uForm" class="form-section">
                 <label class="file-upload-wrapper">
                     <input type="file" id="m3uInput" accept=".m3u,.m3u8" onchange="updateFileName()">
@@ -378,7 +279,6 @@
         </div>
     </div>
 
-    <!-- واجهة المشغل -->
     <div class="app-container" id="appScreen">
         <div class="sidebar">
             <div class="sidebar-header">
@@ -397,9 +297,7 @@
                 </div>
             </div>
 
-            <div class="channels-list" id="channelsContainer">
-                <!-- القنوات -->
-            </div>
+            <div class="channels-list" id="channelsContainer"></div>
         </div>
 
         <div class="video-area">
@@ -411,14 +309,15 @@
         // --- إدارة الحالة والمتغيرات ---
         let allChannels = [];
         let savedAccounts = [];
-        let currentAuth = {}; // بيانات الجلسة الحالية
+        let currentAuth = {};
+        
+        // وسيط CORS لتخطي الحظر (يعمل كجسر بين HTTPS و HTTP)
+        const CORS_PROXY = "https://corsproxy.io/?"; 
 
-        // عند تحميل الصفحة
         window.addEventListener('DOMContentLoaded', () => {
             loadSavedAccounts();
         });
 
-        // --- وظائف الواجهة والتبديل ---
         function switchTab(mode) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
@@ -447,7 +346,6 @@
             }
         }
 
-        // --- إدارة الحسابات المحفوظة (LocalStorage) ---
         function loadSavedAccounts() {
             const data = localStorage.getItem('xtream_accounts');
             if (data) {
@@ -457,13 +355,10 @@
         }
 
         function saveCurrentAccount(host, user, pass) {
-            // التحقق من وجود الحساب مسبقاً لتجنب التكرار
             const index = savedAccounts.findIndex(acc => acc.host === host && acc.user === user);
             if (index !== -1) {
-                // تحديث كلمة المرور إذا تغيرت
                 savedAccounts[index].pass = pass;
             } else {
-                // إضافة حساب جديد
                 savedAccounts.push({ host, user, pass });
             }
             localStorage.setItem('xtream_accounts', JSON.stringify(savedAccounts));
@@ -471,7 +366,7 @@
         }
 
         function deleteAccount(index, event) {
-            event.stopPropagation(); // منع تفعيل حدث الضغط على البطاقة
+            event.stopPropagation();
             if(confirm('هل أنت متأكد من حذف هذا الحساب؟')) {
                 savedAccounts.splice(index, 1);
                 localStorage.setItem('xtream_accounts', JSON.stringify(savedAccounts));
@@ -484,8 +379,6 @@
             document.getElementById('host').value = acc.host;
             document.getElementById('username').value = acc.user;
             document.getElementById('password').value = acc.pass;
-            // يمكن تفعيل الدخول المباشر هنا لو أردت
-            // loginXtream();
         }
 
         function renderAccountsList() {
@@ -504,7 +397,6 @@
                 div.className = 'account-card';
                 div.onclick = () => fillLoginForm(index);
                 
-                // استخراج الدومين للعرض بشكل أنيق
                 let domain = acc.host;
                 try { domain = new URL(acc.host).hostname; } catch(e){}
 
@@ -521,54 +413,56 @@
             });
         }
 
-        // --- منطق الاتصال (Xtream) ---
+        // --- منطق الاتصال (Xtream) المعدل ---
         async function loginXtream() {
             let host = document.getElementById('host').value.trim();
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value.trim();
+            const useProxy = document.getElementById('useProxy').checked; // حالة الخيار
             const loader = document.getElementById('loginLoader');
 
             if(!host || !user || !pass) { showError('يرجى ملء جميع الحقول'); return; }
 
-            // تصحيح الرابط
             if (host.endsWith('/')) host = host.slice(0, -1);
             if (!host.startsWith('http')) host = 'http://' + host;
 
             hideError();
             loader.style.display = 'inline-block';
 
-            // بناء الرابط
-            const apiUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
+            // بناء الرابط الأساسي
+            let targetUrl = `${host}/player_api.php?username=${user}&password=${pass}&action=get_live_streams`;
+            
+            // استخدام الوسيط إذا تم تفعيله
+            let fetchUrl = targetUrl;
+            if (useProxy) {
+                fetchUrl = CORS_PROXY + encodeURIComponent(targetUrl);
+            }
 
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(fetchUrl);
                 if (!response.ok) throw new Error("فشل الاتصال بالسيرفر");
                 
                 const data = await response.json();
 
-                // التحقق من صحة البيانات
                 if (!Array.isArray(data) || (data.user_info && data.user_info.auth === 0)) {
                     throw new Error("بيانات الدخول غير صحيحة أو انتهى الاشتراك");
                 }
 
-                // حفظ الحساب بنجاح
                 saveCurrentAccount(host, user, pass);
                 
-                // تخزين البيانات للتشغيل
-                currentAuth = { host, user, pass, type: 'xtream' };
+                currentAuth = { host, user, pass, type: 'xtream', useProxy: useProxy };
                 allChannels = data.map(ch => ({...ch, type: 'xtream'}));
                 
                 openPlayer(user);
 
             } catch (err) {
                 console.error(err);
-                showError(`خطأ: ${err.message}<br>تأكد من دعم السيرفر للاتصال المباشر (CORS)`);
+                showError(`خطأ في الاتصال: ${err.message}<br>جرب تفعيل/تعطيل خيار "وسيط CORS"`);
             } finally {
                 loader.style.display = 'none';
             }
         }
 
-        // --- منطق ملف M3U ---
         function updateFileName() {
             const input = document.getElementById('m3uInput');
             if(input.files[0]) document.getElementById('fileName').innerText = input.files[0].name;
@@ -609,7 +503,7 @@
                     showError('لم يتم العثور على قنوات صالحة في الملف');
                     loader.style.display = 'none';
                 } else {
-                    currentAuth = { type: 'm3u' };
+                    currentAuth = { type: 'm3u', useProxy: false }; // M3U محلي لا يحتاج بروكسي عادة إلا إذا كان الرابط خارجيا
                     loader.style.display = 'none';
                     openPlayer('ملف محلي');
                 }
@@ -617,26 +511,19 @@
             reader.readAsText(input.files[0]);
         }
 
-        // --- تشغيل المشغل ---
         function openPlayer(username) {
             document.getElementById('loginWrapper').style.display = 'none';
             document.getElementById('appScreen').style.display = 'flex';
             document.getElementById('displayUser').innerText = username;
-            
-            renderChannels(allChannels.slice(0, 500)); // عرض أول 500 قناة للأداء
+            renderChannels(allChannels.slice(0, 500));
         }
 
         function logout() {
-            // إيقاف الفيديو
             const video = document.getElementById('videoPlayer');
             video.pause();
             video.src = "";
-            
-            // العودة للشاشة الرئيسية
             document.getElementById('appScreen').style.display = 'none';
             document.getElementById('loginWrapper').style.display = 'flex';
-            
-            // إعادة تحميل الحسابات (في حال تم التعديل)
             loadSavedAccounts();
         }
 
@@ -671,6 +558,7 @@
             container.appendChild(fragment);
         }
 
+        // --- تشغيل الفيديو (مع دعم الوسيط) ---
         function playChannel(ch, el) {
             document.querySelectorAll('.channel-item').forEach(e => e.classList.remove('active'));
             if(el) el.classList.add('active');
@@ -678,6 +566,12 @@
             let url = ch.url;
             if(ch.type === 'xtream') {
                 url = `${currentAuth.host}/live/${currentAuth.user}/${currentAuth.pass}/${ch.stream_id}.m3u8`;
+            }
+
+            // إذا كان الوسيط مفعلاً، قم بتمرير رابط الفيديو أيضاً عبر الوسيط
+            // هذا ضروري جداً لأن المتصفح سيمنع تشغيل رابط HTTP داخل صفحة HTTPS
+            if (currentAuth.useProxy) {
+                url = CORS_PROXY + encodeURIComponent(url);
             }
 
             const video = document.getElementById('videoPlayer');
@@ -693,7 +587,6 @@
             }
         }
 
-        // --- البحث ---
         function handleSearch() {
             const term = document.getElementById('searchInput').value.toLowerCase();
             const clearBtn = document.getElementById('clearSearchBtn');
